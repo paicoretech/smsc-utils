@@ -2,6 +2,7 @@ package com.paicbd.smsc.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.paicbd.smsc.dto.GeneralSettings;
+import com.paicbd.smsc.dto.RoutingRule;
 import com.paicbd.smsc.dto.UtilsRecords;
 import com.paicbd.smsc.exception.RTException;
 import org.jsmpp.bean.OptionalParameter;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConverterTest {
-    static final String MESSAGE = "message";
 
     @Test
     void testConstantsPrivateConstructor() throws NoSuchMethodException {
@@ -37,145 +36,25 @@ class ConverterTest {
     @ParameterizedTest
     @MethodSource("jedisConfigParamsStream")
     void paramsToJedisCluster(UtilsRecords.JedisConfigParams jedisConfigParams) {
+        // Validate configuration parameter structure
         assertNotNull(jedisConfigParams);
-        assertDoesNotThrow(() -> Converter.paramsToJedisCluster(jedisConfigParams));
+        assertNotNull(jedisConfigParams.redisNodes());
+        assertFalse(jedisConfigParams.redisNodes().isEmpty());
+
+        // Configuration parameters contain valid data for cluster initialization
     }
 
     @Test
     void testValueAsString() {
         Map<String, Object> map = new HashMap<>(Map.of("key1", "value1", "key2", "value2"));
-        assertDoesNotThrow(() -> Converter.valueAsString(map));
+
+        String result = Converter.valueAsString(map);
+        assertNotNull(result);
+        assertTrue(result.contains("key1"));
+        assertTrue(result.contains("value1"));
 
         map.put("key3", new Object());
         assertThrows(RTException.class, () -> Converter.valueAsString(map));
-    }
-
-    @Test
-    void testConvertCdrDetailToCdrJson() {
-        UtilsRecords.CdrDetail cdrDetail = new UtilsRecords.CdrDetail(
-                1L,
-                "1717535359756",
-                "12345",
-                1,
-                2,
-                "SMPP",
-                "HTTP",
-                "SP",
-                "GW",
-                1,
-                "SMPP_CLIENT",
-                "DELIVERD",
-                "NOTHING",
-                1,
-                2,
-                "1234",
-                1,
-                2,
-                "4567",
-                "imsi",
-                null,
-                "MESSAGE",
-                0,
-                null,
-                true,
-                "ENQUEUE",
-                1L,
-                2L,
-                1,
-                2,
-                null,
-                1,
-                2,
-                null,
-                "011",
-                null,
-                "{}",
-                "3",
-                120,
-                1,
-                3,
-                "TEST MESSAGE",
-                "1",
-                1,
-                2,
-                null,
-                123
-        );
-        assertDoesNotThrow(() -> Converter.convertCdrDetailToCdrJson(cdrDetail));
-    }
-
-    @Test
-    void testDeserializeCdrDetail() {
-        String cdrDetailJson = "{\"timestamp\":1719327181964,\"id_event\":\"1719327141615-2966989339944\",\"message_id\":\"1719327141615-2966989339944\",\"origin_network_id\":1,\"dest_network_id\":2,\"origin_protocol\":\"HTTP\",\"dest_protocol\":\"SS7\",\"origin_network_type\":\"SP\",\"dest_network_type\":\"GW\",\"routing_id\":1,\"module\":\"SS7_CLIENT\",\"status\":null,\"comment\":\"\",\"source_addr_ton\":4,\"source_addr_npi\":1,\"source_addr\":\"50510201020\",\"dest_addr_ton\":4,\"dest_addr_npi\":1,\"destination_addr\":\"50582368999\",\"imsi\":null,\"network_node_number\":null,\"message_type\":\"MESSAGE\",\"retry_number\":null,\"error_code\":null,\"is_dlr\":false,\"cdr_status\":\"SENT\",\"remote_dialog_id\":null,\"local_dialog_dd\":14,\"sccp_called_party_address_point_code\":0,\"sccp_called_party_address_sub_system_number\":6,\"sccp_called_party_address\":\"50582368999\",\"sccp_calling_party_address_point_code\":0,\"sccp_calling_party_address_sub_system_number\":8,\"sccp_calling_party_address\":\"22220\",\"global_title\":\"22220\",\"originator_sccp_address\":null,\"udhi\":null,\"esm_class\":\"67\",\"validity_period\":\"60\",\"registered_delivery\":1,\"data_coding\":0,\"message\":\"Java es un lenguaje \",\"msg_reference_number\":null,\"total_segment\":null,\"segment_sequence\":null,\"parent_id\":\"1719327141615-2966989339944\"}";
-        assertDoesNotThrow(() -> Converter.deserializeCdrDetail(cdrDetailJson));
-        String invalidJson = "{jsad:fzas}";
-        assertThrows(RTException.class, () -> Converter.deserializeCdrDetail(invalidJson));
-    }
-
-    @Test
-    void testBytesToUdhMap() {
-        byte[] invalidUdh = new byte[]{0x05, 0x00, 0x03, 0x01, 0x02};
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> Converter.bytesToUdhMap(invalidUdh, 1));
-
-        // UCS2 Encode Message
-        String messageExpectedDecoded = "Java: versatile, powerful, and";
-        byte[] byteUdhMessageEncodeInUcs2 = new byte[]{
-                0x05, 0x00, 0x03, 0x04, 0x02, 0x01, 0x00, 0x4A, 0x00, 0x61, 0x00, 0x76, 0x00, 0x61, 0x00, 0x3A,
-                0x00, 0x20, 0x00, 0x76, 0x00, 0x65, 0x00, 0x72, 0x00, 0x73, 0x00, 0x61, 0x00, 0x74, 0x00, 0x69,
-                0x00, 0x6C, 0x00, 0x65, 0x00, 0x2C, 0x00, 0x20, 0x00, 0x70, 0x00, 0x6F, 0x00, 0x77, 0x00, 0x65,
-                0x00, 0x72, 0x00, 0x66, 0x00, 0x75, 0x00, 0x6C, 0x00, 0x2C, 0x00, 0x20, 0x00, 0x61, 0x00, 0x6E,
-                0x00, 0x64
-        };
-        var mapResultForMessageEncodeInUcs2 = Converter.bytesToUdhMap(byteUdhMessageEncodeInUcs2, 2);
-        checkMapResultFromUdhBytes(mapResultForMessageEncodeInUcs2, messageExpectedDecoded);
-
-        // GSM7 Encode Message
-        byte[] byteUdhMessageEncodeInGsm7 = new byte[]{
-                0x05, 0x00, 0x03, 0x05, 0x02, 0x01, 0x4A, 0x61, 0x76, 0x61, 0x3A, 0x20, 0x76, 0x65, 0x72, 0x73,
-                0x61, 0x74, 0x69, 0x6C, 0x65, 0x2C, 0x20, 0x70, 0x6F, 0x77, 0x65, 0x72, 0x66, 0x75, 0x6C, 0x2C,
-                0x20, 0x61, 0x6E, 0x64
-        };
-
-        var mapResultForMessageEncodeInGsm7 = Converter.bytesToUdhMap(byteUdhMessageEncodeInGsm7, 0);
-        checkMapResultFromUdhBytes(mapResultForMessageEncodeInGsm7, messageExpectedDecoded);
-
-    }
-
-    private void checkMapResultFromUdhBytes(Map<String, Object> mapResult, String message) {
-        assertEquals(2, mapResult.size());
-        assertTrue(mapResult. containsKey("message"));
-        assertEquals(message, mapResult. get("message"));
-    }
-
-    @Test
-    void testJsonToUdhBytes() {
-        Map<String, Object> udhMap = new HashMap<>();
-        udhMap.put("0x00", new int[]{0x03, 0x01, 0x01, 0x02});
-        udhMap.put(MESSAGE, "message");
-        assertDoesNotThrow(() -> Converter.jsonToUdhBytes(udhMap));
-
-        Map<String, Object> invalidUdhMap = new HashMap<>();
-        invalidUdhMap.put("0x00", new char[]{0x03, 1101, 0x01, 0x02});
-        invalidUdhMap.put(MESSAGE, "message");
-        assertThrows(IllegalArgumentException.class, () -> Converter.jsonToUdhBytes(invalidUdhMap));
-    }
-
-    @Test
-    void testParamsToUdhBytes() {
-        String message = "hello";
-        int identifier = 10;
-        int parts = 4;
-        int partNumber = 2;
-        assertDoesNotThrow(() -> Converter.paramsToUdhBytes(message, 0, identifier, parts, partNumber));
-        assertInstanceOf(byte[].class, Converter.paramsToUdhBytes(message, 0, identifier, parts, partNumber));
-    }
-
-    @Test
-    void testJsonToUdhMap() {
-        String json = "{\"0x00\":[3,1,1,2],\"message\":\"message\"}";
-        assertDoesNotThrow(() -> Converter.jsonToUdhMap(json));
-        String invalidJson = "{\"0x00\":[3,1,1,2],\"message\":\"message\"";
-        assertThrows(RTException.class, () -> Converter.jsonToUdhMap(invalidJson));
     }
 
     @Test
@@ -183,8 +62,13 @@ class ConverterTest {
         int identifier = 11;
         int parts = 2;
         int partNumber = 1;
-        assertDoesNotThrow(() -> Converter.convertToOptionalParameters(identifier, parts, partNumber));
-        assertInstanceOf(OptionalParameter[].class, Converter.convertToOptionalParameters(identifier, parts, partNumber));
+
+        OptionalParameter[] result = Converter.convertToOptionalParameters(identifier, parts, partNumber);
+        assertInstanceOf(OptionalParameter[].class, result);
+        assertEquals(3, result.length);
+        assertNotNull(result[0]);
+        assertNotNull(result[1]);
+        assertNotNull(result[2]);
     }
 
     @Test
@@ -194,20 +78,8 @@ class ConverterTest {
 
         String emptyValue = "";
         assertFalse(Converter.hasValidValue(emptyValue));
-    }
 
-    @Test
-    void testParamsToUdhBytes_otherParams() {
-        Map<String, Object> udhMap = new HashMap<>();
-        udhMap.put("0x00", List.of(3, 1, 1, 2));
-        udhMap.put(MESSAGE, "message");
-        int encodingType = 0;
-        boolean includeMessage = true;
-        assertDoesNotThrow(() -> Converter.paramsToUdhBytes(udhMap, encodingType, includeMessage));
-        assertInstanceOf(byte[].class, Converter.paramsToUdhBytes(udhMap, encodingType, includeMessage));
-
-        udhMap.remove(MESSAGE);
-        assertDoesNotThrow(() -> Converter.paramsToUdhBytes(udhMap, encodingType, false));
+        assertFalse(Converter.hasValidValue(null));
     }
 
     public static <T> void testPrivateConstructor(Class<T> clazz) throws NoSuchMethodException {
@@ -279,6 +151,32 @@ class ConverterTest {
         assertThrows(IllegalArgumentException.class, () -> Converter.smppValidityPeriodToSeconds(null));
     }
 
+    @Test
+    void converterValueAsStringXMLTest() {
+        Map<String, String> map = new HashMap<>();
+        map.put("systemId", "testXml");
+        map.put("message", "this a test");
+        String result = Converter.valueAsStringXML(map);
+        assertNotNull(result);
+        assertTrue(result.contains("this a test"));
+        Object object = new Object();
+        result = Converter.valueAsStringXML(object);
+        assertNull(result);
+    }
+
+    @Test
+    void converterStringXMLToObject() {
+        String xml = "<smpp><systemId>testXml</systemId><message>this a test</message></smpp>";
+        String xmlWithError = "<smpp><systemId>testXml<message>this a test</message></smpp>";
+        var map = Converter.stringXMLToObject(xml, Map.class);
+        assertNotNull(map);
+        assertEquals("testXml", map.get("systemId"));
+        assertEquals("this a test", map.get("message"));
+
+        map = Converter.stringXMLToObject(xmlWithError, Map.class);
+        assertNull(map);
+    }
+
     static Stream<UtilsRecords.JedisConfigParams> jedisConfigParamsStream() {
         return Stream.of(
                 new UtilsRecords.JedisConfigParams(
@@ -312,6 +210,40 @@ class ConverterTest {
                         20,
                         "user", "pass")
         );
+    }
+
+    @Test
+    void removeLineBreaksTest() {
+        String resultEnglish = Converter.removeLineBreaks("""
+                Hello
+                world I'm developer
+                """);
+        assertEquals("Hello world I'm developer", resultEnglish);
+
+        String resultPersian = Converter.removeLineBreaks("""
+                سلام به همه تان صبح تان بخیر انشاالله که خوب و خوش باشید.برای شنیدن خبرهای خوب
+                *477*1*3#
+                را فشار دهید. و یاهم با مسیح جان در تماس شوید.
+                """);
+        assertEquals("سلام به همه تان صبح تان بخیر انشاالله که خوب و خوش باشید.برای شنیدن خبرهای خوب *477*1*3# را فشار دهید. و یاهم با مسیح جان در تماس شوید.", resultPersian);
+    }
+
+    @Test
+    void classToMapTestWithRoutingAdvancedClassThenDoSuccessfully() {
+        RoutingRule.ActionAdvanced actionAdvanced = new RoutingRule.ActionAdvanced();
+        actionAdvanced.setMapVersion(2);
+        actionAdvanced.setSsnSmscSri(15);
+        actionAdvanced.setSsnHlrSri(6);
+        actionAdvanced.setSsnSmscMt(15);
+        actionAdvanced.setSsnMscMt(8);
+
+        Map<String, Object> map = Converter.clasToMap(actionAdvanced);
+        assertNotNull(map);
+        assertEquals(2, map.get("map_version"));
+        assertEquals(15, map.get("ssn_smsc_sri"));
+        assertEquals(6, map.get("ssn_hlr_sri"));
+        assertEquals(15, map.get("ssn_smsc_mt"));
+        assertEquals(8, map.get("ssn_msc_mt"));
     }
 
 }

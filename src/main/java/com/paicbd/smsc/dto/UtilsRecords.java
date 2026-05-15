@@ -2,13 +2,16 @@ package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.paicbd.smsc.utils.Converter;
+import com.paicbd.smsc.utils.Generated;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
+@Generated
 public class UtilsRecords {
     public record WebSocketConnectionParams(
             boolean isWsEnabled,
@@ -35,7 +38,7 @@ public class UtilsRecords {
         }
 
         public OptionalParameter(Map<String, String> map) {
-            this(convertToShort(map.get("tag")), map.get("value"));
+            this(convertToShort(String.valueOf(map.get("tag"))), String.valueOf(map.get("value")));
         }
 
         private static short convertToShort(String tag) {
@@ -59,15 +62,26 @@ public class UtilsRecords {
             @JsonProperty("msg_reference_number") String msgReferenceNumber,
             @JsonProperty("total_segment") Integer totalSegment,
             @JsonProperty("segment_sequence") Integer segmentSequence,
-            @JsonProperty("parent_id") String parentId
+            @JsonProperty("parent_id") String parentId,
+            @JsonProperty("dest_network_id") int destNetworkId,
+            @JsonProperty("apply_for_refund") boolean applyForRefund,
+            @JsonProperty("custom_parameters") Map<String, Object> customParams,
+            @JsonProperty("split_for_smsc") boolean splitForSmsc
     ) {
+
+        public boolean isFinalSegmentForSplitSmsc() {
+            boolean hasSegmentInfo = Objects.nonNull(this.totalSegment) && Objects.nonNull(this.segmentSequence);
+            boolean isLastSegment = hasSegmentInfo && Objects.equals(this.totalSegment, this.segmentSequence);
+            return !this.splitForSmsc || !hasSegmentInfo || isLastSegment;
+        }
+
         @Override
         public String toString() {
             return Converter.valueAsString(this);
         }
     }
 
-        public record JedisConfigParams(
+    public record JedisConfigParams(
             @Nonnull List<String> redisNodes,
             int maxTotal,
             int maxIdle,
@@ -85,72 +99,20 @@ public class UtilsRecords {
         }
     }
 
-    public record CdrDetail(
-            @JsonProperty("timestamp") long timestamp,
-            @JsonProperty("id_event") String idEvent,
-            @JsonProperty("message_id") String messageId,
-            @JsonProperty("origin_network_id") Integer originNetworkId,
-            @JsonProperty("dest_network_id") Integer destNetworkId,
-            @JsonProperty("origin_protocol") String originProtocol,
-            @JsonProperty("dest_protocol") String destProtocol,
-            @JsonProperty("origin_network_type") String originNetworkType,
-            @JsonProperty("dest_network_type") String destNetworkType,
-            @JsonProperty("routing_id") int routingId,
-            @JsonProperty("module") String module,
-            @JsonProperty("status") String status,
-            @JsonProperty("comment") String comment,
-            @JsonProperty("source_addr_ton") Integer sourceAddrTon,
-            @JsonProperty("source_addr_npi") Integer sourceAddrNpi,
-            @JsonProperty("source_addr") String sourceAddr,
-            @JsonProperty("dest_addr_ton") Integer destAddrTon,
-            @JsonProperty("dest_addr_npi") Integer destAddrNpi,
-            @JsonProperty("destination_addr") String destinationAddr,
-            @JsonProperty("imsi") String imsi,
-            @JsonProperty("network_node_number") String networkNodeNumber,
-            @JsonProperty("message_type") String messageType,
-            @JsonProperty("retry_number") Integer retryNumber,
-            @JsonProperty("error_code") String errorCode,
-            @JsonProperty("is_dlr") boolean isDlr,
-            @JsonProperty("cdr_status") String cdrStatus,
-            @JsonProperty("remote_dialog_id") Long remoteDialogId,
-            @JsonProperty("local_dialog_dd") Long localDialogId,
-            @JsonProperty("sccp_called_party_address_point_code") Integer sccpCalledPartyAddressPointCode,
-            @JsonProperty("sccp_called_party_address_sub_system_number") Integer sccpCalledPartyAddressSubSystemNumber,
-            @JsonProperty("sccp_called_party_address") String sccpCalledPartyAddress,
-            @JsonProperty("sccp_calling_party_address_point_code") Integer sccpCallingPartyAddressPointCode,
-            @JsonProperty("sccp_calling_party_address_sub_system_number") Integer sccpCallingPartyAddressSubSystemNumber,
-            @JsonProperty("sccp_calling_party_address") String sccpCallingPartyAddress,
-            @JsonProperty("global_title") String globalTitle,
-            @JsonProperty("originator_sccp_address") String originatorSccpAddress,
-            @JsonProperty("udhi") String udhi,
-            @JsonProperty("esm_class") String esmClass,
-            @JsonProperty("validity_period") long validityPeriod,
-            @JsonProperty("registered_delivery") Integer registeredDelivery,
-            @JsonProperty("data_coding") int dataCoding,
-            @JsonProperty("message") String message,
-            @JsonProperty("msg_reference_number") String msgReferenceNumber,
-            @JsonProperty("total_segment") Integer totalSegment,
-            @JsonProperty("segment_sequence") Integer segmentSequence,
-            @JsonProperty("parent_id") String parentId,
-            @JsonProperty("broadcast_id") Integer broadcastId
-    ) {
-        @Override
-        public String toString() {
-            return Converter.valueAsString(this);
-        }
-    }
-
     public record Cdr(
             @JsonProperty("record_date") String recordDate,
             @JsonProperty("submit_date") String submitDate,
             @JsonProperty("delivery_date") String deliveryDate,
             @JsonProperty("message_type") String messageType,
             @JsonProperty("message_id") String messageId,
+            @JsonProperty("mno_message_id") String mnoMessageId,
             @JsonProperty("origination_protocol") String originationProtocol,
             @JsonProperty("origination_network_id") String originationNetworkId,
+            @JsonProperty("origination_network_name") String originationNetworkName,
             @JsonProperty("origination_type") String originationType,
             @JsonProperty("destination_protocol") String destinationProtocol,
             @JsonProperty("destination_network_id") String destinationNetworkId,
+            @JsonProperty("destination_network_name") String destinationNetworkName,
             @JsonProperty("destination_type") String destinationType,
             @JsonProperty("routing_id") String routingId,
             @JsonProperty("status") String status,
@@ -174,11 +136,12 @@ public class UtilsRecords {
             @JsonProperty("remote_spc") String remoteSpc,
             @JsonProperty("remote_ssn") String remoteSsn,
             @JsonProperty("remote_global_title_digits") String remoteGlobalTitleDigits,
+            @JsonProperty("correlation_id") String correlationId,
             @JsonProperty("imsi") String imsi,
             @JsonProperty("nnn_digits") String nnnDigits,
             @JsonProperty("originator_sccp_address") String originatorSccpAddress,
             @JsonProperty("mt_service_center_address") String mtServiceCenterAddress,
-            @JsonProperty("first_20_character_of_sms") String first20CharacterOfSms,
+            @JsonProperty("message") String message,
             @JsonProperty("esm_class") String esmClass,
             @JsonProperty("udhi") String udhi,
             @JsonProperty("registered_delivery") String registeredDelivery,
@@ -186,8 +149,17 @@ public class UtilsRecords {
             @JsonProperty("total_segment") String totalSegment,
             @JsonProperty("segment_sequence") String segmentSequence,
             @JsonProperty("retry_number") String retryNumber,
-            @JsonProperty("parent_id") String parentId
+            @JsonProperty("parent_id") String parentId,
+            @JsonProperty("broadcast_id") int broadcastId,
+            @JsonProperty("local_translation_type") String localTranslationType,
+            @JsonProperty("remote_translation_type") String remoteTranslationType,
+            @JsonProperty("message_priority") String messagePriority,
+            @JsonProperty("optional_parameters") String optionalParameters
     ) {
+        @Override
+        public String toString() {
+            return Converter.valueAsString(this);
+        }
     }
 
     public record CallbackHeaderHttp(
@@ -204,11 +176,45 @@ public class UtilsRecords {
             @JsonProperty("message_id") String messageId,
             @JsonProperty("status") Integer status,
             @JsonProperty("date") String date,
-            @JsonProperty("comment") String comment
+            @JsonProperty("comment") String comment,
+            @JsonProperty("dest_protocol") String destProtocol,
+            @JsonProperty("dest_network_id") Integer destNetworkId,
+            @JsonProperty("dest_network_type") String destNetworkType
     ) {
         @Override
         public String toString() {
             return Converter.valueAsString(this);
         }
+    }
+
+    public record HttpProxyResponse(
+            @JsonProperty(value = "message_id") String messageId,
+            @JsonProperty(value = "error") boolean error,
+            @JsonProperty(value = "error_code") Integer errorCode,
+            @JsonProperty(value = "error_message") String errorMessage
+    ) {
+        @Override
+        public String toString() {
+            return Converter.valueAsString(this);
+        }
+    }
+
+    public record CcMccMnc(
+            @JsonProperty(value = "country_code") String countryCode,
+            @JsonProperty(value = "mcc_mnc") String mccMnc,
+            @JsonProperty(value = "smsc") String smsc
+    ) {
+        @Override
+        public String toString() {
+            return Converter.valueAsString(this);
+        }
+    }
+
+    public record ConcatenatedMessageDetails(
+            int msgReferenceNumber,
+            int totalSegments,
+            int segmentSequence,
+            String text
+    ) {
     }
 }

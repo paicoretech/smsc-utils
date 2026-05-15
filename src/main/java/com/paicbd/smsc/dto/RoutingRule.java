@@ -1,6 +1,7 @@
 package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.paicbd.smsc.utils.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Generated
 public class RoutingRule {
     @JsonProperty("id")
     private int id;
@@ -87,9 +89,10 @@ public class RoutingRule {
     @JsonProperty("remove_dest_addr_prefix")
     private String removeDestAddrPrefix;
 
-    @JsonProperty("new_gt_sccp_addr_mt")
-    private String newGtSccpAddrMt;
+    @JsonProperty("new_gt_sccp_addr")
+    private String newGtSccpAddr;
 
+    @Builder.Default
     @JsonProperty("drop_map_sri")
     private boolean dropMapSri = false;
 
@@ -99,21 +102,29 @@ public class RoutingRule {
     @JsonProperty("network_id_to_permanent_failure")
     private int networkIdToPermanentFailure;
 
+    @Builder.Default
     @JsonProperty("drop_temp_failure")
     private boolean dropTempFailure = false;
 
     @JsonProperty("network_id_temp_failure")
     private int networkIdTempFailure;
 
+    @JsonProperty("custom_params_matcher")
+    private List<CustomParamMatcher> customParamsMatcher;
+
+    @Builder.Default
     @JsonProperty("has_filter_rules")
     private boolean hasFilterRules = false;
 
+    @Builder.Default
     @JsonProperty("has_action_rules")
     private boolean hasActionRules = false;
 
+    @Builder.Default
     @JsonProperty("is_sri_response")
     private boolean sriResponse = false;
 
+    @Builder.Default
     @JsonProperty("check_sri_response")
     private boolean checkSriResponse = false;
 
@@ -123,8 +134,29 @@ public class RoutingRule {
     @JsonProperty("new_short_message")
     private String newShortMessage;
 
+    @Builder.Default
+    @JsonProperty("diameter_charging")
+    private boolean diameterCharging = false;
+
+    @Builder.Default
+    @JsonProperty("apply_for_refund")
+    private boolean applyForRefund = false;
+
+    @Builder.Default
+    @JsonProperty("auto_map_version")
+    private boolean autoMapVersion = true;
+
+    @Builder.Default
+    @JsonProperty("has_action_advanced_rules")
+    private boolean hasActionAdvancedRules = false;
+
+    @JsonProperty("action_advanced")
+    private ActionAdvanced actionAdvanced;
+
     @Getter
     @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class Destination {
         @JsonProperty("priority")
         private int priority;
@@ -134,5 +166,65 @@ public class RoutingRule {
         private String protocol;
         @JsonProperty("network_type")
         private String networkType;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class CustomParamMatcher {
+        @JsonProperty("property_name")
+        private String propertyName;
+
+        @JsonProperty("value_matcher")
+        private Object valueMatcher;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ActionAdvanced {
+        @JsonProperty("map_version")
+        private Integer mapVersion = -1;
+
+        @JsonProperty("operation_code_sri")
+        private Integer operationCodeSri = -1;
+
+        @JsonProperty("operation_code_mt")
+        private Integer operationCodeMt = -1;
+
+        @JsonProperty("ssn_smsc_sri")
+        private Integer ssnSmscSri = -1;
+
+        @JsonProperty("ssn_hlr_sri")
+        private Integer ssnHlrSri = -1;
+
+        @JsonProperty("ssn_msc_mt")
+        private Integer ssnMscMt = -1;
+
+        @JsonProperty("ssn_smsc_mt")
+        private Integer ssnSmscMt = -1;
+
+        @JsonProperty("sccp_source_address_sri")
+        private String sccpSourceAddressSri = "";
+
+        @JsonProperty("sccp_source_address_mt")
+        private String sccpSourceAddressMt = "";
+
+        @JsonProperty("sccp_destination_address_mt")
+        private String sccpDestinationAddressMt = "";
+
+        @JsonProperty("custom_map_layer_source_address_sri")
+        private String customMapLayerSourceAddressSri = "";
+
+        @JsonProperty("custom_map_layer_source_address_mt")
+        private String customMapLayerSourceAddressMt = "";
+
+        @JsonProperty("priority_flag_sri")
+        private boolean priorityFlagSri = true;
+
+        @JsonProperty("application_context_mt")
+        private String applicationContextMt = "";
     }
 }

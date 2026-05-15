@@ -1,74 +1,63 @@
 package com.paicbd.smsc.cdr;
 
+import com.paicbd.smsc.dto.MessageEvent;
 import com.paicbd.smsc.dto.UtilsRecords;
+import com.paicbd.smsc.kafka.KafkaTopicsConstants;
 import com.paicbd.smsc.utils.BroadcastMessageStatus;
-import com.paicbd.smsc.utils.Converter;
 import com.paicbd.smsc.utils.UtilsEnum;
-import jakarta.annotation.Nonnull;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.JedisCluster;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Objects;
+import java.time.format.DateTimeFormatter;
+
+import static com.paicbd.smsc.utils.GeneralSmscConstants.SMSC_DATETIME_FORMATTER;
 
 @Slf4j
 public class CdrProcessor {
-    private static final String CDR_LIST_NAME = "cdr";
-    private static final String CDR_DETAIL_HASH_NAME = "cdr_details";
-    private static final String BROADCAST_STATISTICS_LIST = "broadcast_statistics";
-    private final JedisCluster jedisCluster;
 
-    public CdrProcessor(UtilsRecords.JedisConfigParams params) {
-        log.debug("Creating CdrProcessor instance with params: {}", params);
-        this.jedisCluster = Converter.paramsToJedisCluster(params);
+    public void publishCdr(@NonNull MessageEvent event, UtilsEnum.Module module, UtilsEnum.MessageType messageType,
+                           UtilsEnum.CdrStatus status, KafkaTemplate<String, String> kafkaTemplate) {
+        this.publishCdr(event, "", module, messageType, status, null, kafkaTemplate);
     }
 
-    public CdrProcessor(JedisCluster jedisCluster) {
-        log.debug("Creating CdrProcessor instance with jedisCluster {}", jedisCluster);
-        this.jedisCluster = jedisCluster;
+    public void publishCdr(
+            @NonNull MessageEvent event, String mnoMessageId, UtilsEnum.Module module,
+            UtilsEnum.MessageType messageType, UtilsEnum.CdrStatus status, KafkaTemplate<String, String> kafkaTemplate) {
+        this.publishCdr(event, mnoMessageId, module, messageType, status, null, kafkaTemplate);
     }
 
-    public void putCdrDetailOnRedis(@Nonnull UtilsRecords.CdrDetail newCdrDetails) {
-        Objects.requireNonNull(newCdrDetails.messageId(), "MessageId is null, cannot put CDR");
-        String newCdrRaw = newCdrDetails.toString();
-        this.jedisCluster.hset(CDR_DETAIL_HASH_NAME, newCdrDetails.messageId(), newCdrRaw);
+    public void publishCdr(
+            @NonNull MessageEvent event, String mnoMessageId, UtilsEnum.Module module,
+            UtilsEnum.MessageType messageType, UtilsEnum.CdrStatus status,
+            String comment, KafkaTemplate<String, String> kafkaTemplate) {
+        UtilsRecords.Cdr cdr = event.toCdr(module, messageType, status, mnoMessageId, comment);
+        sendBroadcastStatistics(cdr, kafkaTemplate);
+        kafkaTemplate.send(KafkaTopicsConstants.CDR_TOPIC, cdr.toString());
     }
 
-    public void createCdr(String messageId) {
-        Objects.requireNonNull(messageId, "HashId is null, cannot create CDR");
-        String cdrDetailJson = jedisCluster.hget(CDR_DETAIL_HASH_NAME, messageId);
-        if (cdrDetailJson != null) {
-            UtilsRecords.CdrDetail cdrDetail = Converter.deserializeCdrDetail(cdrDetailJson);
-            String cdrJson = Converter.convertCdrDetailToCdrJson(cdrDetail);
-            if (cdrJson != null) {
-                this.sendBroadcastStatistics(cdrDetail);
-                jedisCluster.hdel(CDR_DETAIL_HASH_NAME, messageId);
-                jedisCluster.hdel(CDR_DETAIL_HASH_NAME, cdrDetail.parentId());
-                jedisCluster.lpush(CDR_LIST_NAME, cdrJson);
-                log.debug("Created CDR and added to Redis queue: {}", cdrJson);
-            }
-            return;
-        }
-
-        log.error("CDR detail not found for messageId: {}", messageId);
-    }
-
-    private void sendBroadcastStatistics(UtilsRecords.CdrDetail cdrDetail) {
-        if (Objects.nonNull(cdrDetail.broadcastId())) {
-            var submitDate = Converter.parseSubmitDate(cdrDetail.idEvent());
-            Instant instant = Instant.ofEpochMilli(submitDate);
+    private void sendBroadcastStatistics(UtilsRecords.Cdr cdr, KafkaTemplate<String, String> kafkaTemplate) {
+        if (cdr.broadcastId() > 0 && UtilsEnum.MessageType.MESSAGE.name().equals(cdr.messageType())) {
+            Instant instant = Instant.ofEpochMilli(Long.parseLong(cdr.deliveryDate()));
             LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(SMSC_DATETIME_FORMATTER);
             var broadcastStatistic = new UtilsRecords.BroadcastStatistic(
-                    cdrDetail.broadcastId(),
-                    cdrDetail.messageId(),
-                    UtilsEnum.CdrStatus.SENT.toString().equals(cdrDetail.cdrStatus()) ?
+                    cdr.broadcastId(),
+                    cdr.messageId(),
+                    UtilsEnum.CdrStatus.SUCCESS.toString().equals(cdr.status()) ?
                             BroadcastMessageStatus.SENT.getValue() : BroadcastMessageStatus.FAILED.getValue(),
-                    localDateTime.toString(),
-                    cdrDetail.comment()
+                    localDateTime.format(formatter),
+                    cdr.comment(),
+                    cdr.destinationProtocol(),
+                    Integer.parseInt(cdr.destinationNetworkId()),
+                    cdr.destinationType()
             );
-            jedisCluster.lpush(BROADCAST_STATISTICS_LIST, broadcastStatistic.toString());
+            kafkaTemplate.send(
+                    KafkaTopicsConstants.BROADCAST_STATISTIC_TOPIC,
+                    broadcastStatistic.toString());
         }
     }
 }

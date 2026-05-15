@@ -4,7 +4,9 @@ import com.paicbd.smsc.dto.Gateway;
 import com.paicbd.smsc.dto.GeneralSettings;
 import com.paicbd.smsc.dto.MessageEvent;
 import com.paicbd.smsc.dto.UtilsRecords;
+import org.jsmpp.bean.GSMSpecificFeature;
 import org.jsmpp.bean.OptionalParameter;
+import org.jsmpp.bean.SubmitSm;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +18,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -27,34 +28,44 @@ class SmppUtilsTest {
     @DisplayName("determineEncodingType when using a general Settings object and a valid encoding then return the value")
     void determineEncodingTypeUsingSettingsWhenEncodingIsValidThenReturnValue() {
         GeneralSettings generalSettings = GeneralSettings.builder()
-                .encodingGsm7(SmppEncoding.GSM7)
-                .encodingUcs2(SmppEncoding.UCS2)
-                .encodingIso88591(SmppEncoding.ISO88591)
+                .encodingGsm7(EncodingUtils.GSM7)
+                .encodingUcs2(EncodingUtils.UCS2)
+                .encodingIso88591(EncodingUtils.ISO88591)
                 .build();
 
-        assertEquals(SmppEncoding.GSM7, SmppUtils.determineEncodingType(SmppEncoding.DCS_0, generalSettings));
-        assertEquals(SmppEncoding.UCS2, SmppUtils.determineEncodingType(SmppEncoding.DCS_8, generalSettings));
-        assertEquals(SmppEncoding.ISO88591, SmppUtils.determineEncodingType(SmppEncoding.DCS_3, generalSettings));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(EncodingUtils.DCS_0, generalSettings));
+        assertEquals(EncodingUtils.UCS2, SmppUtils.determineEncodingType(EncodingUtils.DCS_8, generalSettings));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(EncodingUtils.DCS_3, generalSettings));
     }
 
     @Test
     @DisplayName("determineEncodingType when using a gateway object and a valid encoding then return the value")
     void determineEncodingTypeUsingGatewayWhenEncodingIsValidThenReturnValue() {
         Gateway gateway = Gateway.builder()
-                .encodingGsm7(SmppEncoding.GSM7)
-                .encodingUcs2(SmppEncoding.UCS2)
-                .encodingIso88591(SmppEncoding.ISO88591)
+                .encodingGsm7(EncodingUtils.GSM7)
+                .encodingUcs2(EncodingUtils.UCS2)
+                .encodingIso88591(EncodingUtils.ISO88591)
                 .build();
-        assertEquals(SmppEncoding.GSM7, SmppUtils.determineEncodingType(SmppEncoding.DCS_0, gateway));
-        assertEquals(SmppEncoding.UCS2, SmppUtils.determineEncodingType(SmppEncoding.DCS_8, gateway));
-        assertEquals(SmppEncoding.ISO88591, SmppUtils.determineEncodingType(SmppEncoding.DCS_3, gateway));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(EncodingUtils.DCS_0, gateway));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(1, gateway));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(2, gateway));
+        assertEquals(EncodingUtils.GSM7, SmppUtils.determineEncodingType(3, gateway));
+        assertEquals(EncodingUtils.ISO88591, SmppUtils.determineEncodingType(4, gateway));
+        assertEquals(EncodingUtils.ISO88591, SmppUtils.determineEncodingType(5, gateway));
+        assertEquals(EncodingUtils.ISO88591, SmppUtils.determineEncodingType(6, gateway));
+        assertEquals(EncodingUtils.ISO88591, SmppUtils.determineEncodingType(7, gateway));
+        assertEquals(EncodingUtils.UCS2, SmppUtils.determineEncodingType(EncodingUtils.DCS_8, gateway));
+        assertEquals(EncodingUtils.UCS2, SmppUtils.determineEncodingType(9, gateway));
+        assertEquals(EncodingUtils.UCS2, SmppUtils.determineEncodingType(10, gateway));
+        assertEquals(EncodingUtils.UCS2, SmppUtils.determineEncodingType(11, gateway));
     }
 
     @Test
     @DisplayName("determineEncodingType when using an invalid encoding then an IllegalStateException is thrown")
     void determineEncodingTypeWhenEncodingIsNotValidThenThrowException() {
         GeneralSettings smppGeneralSettingsMock = mock(GeneralSettings.class);
-        assertThrows(IllegalStateException.class, () -> SmppUtils.determineEncodingType(1, smppGeneralSettingsMock));
+        int selectedEncodingType = SmppUtils.determineEncodingType(1, smppGeneralSettingsMock);
+        assertEquals(EncodingUtils.GSM7, selectedEncodingType);
     }
 
     @Test
@@ -120,14 +131,12 @@ class SmppUtilsTest {
                 .commandStatus(4)
                 .dataCoding(0)
                 .esmClass(3)
-                .udhi("1")
                 .sourceAddrTon(1)
                 .sourceAddrNpi(1)
                 .destAddrNpi(1)
                 .destAddrTon(1)
                 .sourceAddr("11111111")
                 .destinationAddr("22222222")
-                .udhi("1")
                 .build();
 
         SmppUtils.setTLV(submitSmEvent, optionalParameterMap.values().toArray(new OptionalParameter[0]));
@@ -292,5 +301,29 @@ class SmppUtilsTest {
         SmppUtils.setTLV(submitSmEvent, optionalParameters);
         assertNotNull(SmppUtils.getTLV(submitSmEvent));
 
+    }
+
+    @Test
+    void messagePayloadTlv() {
+        String stringHex = "0605043E94000048656c6c6f2054686973206d65737361676520646f6573206e6f74207265717565737420646c7221".toUpperCase();
+        byte[] stringBytes = EncodingUtils.hexToBytes(stringHex);
+
+        SubmitSm submitSm = new SubmitSm();
+        submitSm.setDataCoding((byte) 0);
+        submitSm.setEsmClass(GSMSpecificFeature.UDHI.value());
+        OptionalParameter[] optionalParameters =
+                new OptionalParameter[]{new OptionalParameter.Message_payload(stringBytes)};
+        submitSm.setOptionalParameters(optionalParameters);
+
+        byte[] messagePayload = SmppUtils.getMessagePayloadValue(submitSm);
+        assertNotNull(messagePayload);
+        assertEquals(stringHex, EncodingUtils.bytesToHex(messagePayload));
+
+        SubmitSm submitSmWithoutTlv = new SubmitSm();
+        submitSmWithoutTlv.setDataCoding((byte) 0);
+
+        byte[] messagePayloadWithoutTlv = SmppUtils.getMessagePayloadValue(submitSmWithoutTlv);
+        assertNotNull(messagePayloadWithoutTlv);
+        assertEquals(0, messagePayloadWithoutTlv.length);
     }
 }

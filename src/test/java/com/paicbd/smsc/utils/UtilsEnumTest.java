@@ -7,11 +7,13 @@ import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.util.DeliveryReceiptState;
 import org.junit.jupiter.api.Test;
 
+import static com.paicbd.smsc.utils.UtilsEnum.Module.DIAMETER;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.HTTP_CLIENT;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.HTTP_SERVER;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.ORCHESTRATOR;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.RETRIES;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.ROUTING;
+import static com.paicbd.smsc.utils.UtilsEnum.Module.SIP;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.SMPP_CLIENT;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.SMPP_SERVER;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.SS7_CLIENT;
@@ -122,7 +124,9 @@ class UtilsEnumTest {
                 SS7_CLIENT,
                 ROUTING,
                 ORCHESTRATOR,
-                RETRIES
+                RETRIES,
+                DIAMETER,
+                SIP
         };
 
         assertArrayEquals(expectedValues, UtilsEnum.Module.values());
@@ -132,7 +136,12 @@ class UtilsEnumTest {
     void testMessageTypeEnumValues() {
         UtilsEnum.MessageType[] expectedValues = {
                 UtilsEnum.MessageType.MESSAGE,
-                UtilsEnum.MessageType.DELIVER
+                UtilsEnum.MessageType.DELIVER,
+                UtilsEnum.MessageType.SS7API_SRI,
+                UtilsEnum.MessageType.SS7API_MT,
+                UtilsEnum.MessageType.SS7API_MESSAGE,
+                UtilsEnum.MessageType.HR_SRI,
+                UtilsEnum.MessageType.HR_MESSAGE
         };
 
         assertArrayEquals(expectedValues, UtilsEnum.MessageType.values());
@@ -143,7 +152,7 @@ class UtilsEnumTest {
         UtilsEnum.CdrStatus[] expectedValues = {
                 UtilsEnum.CdrStatus.RECEIVED,
                 UtilsEnum.CdrStatus.ENQUEUE,
-                UtilsEnum.CdrStatus.SENT,
+                UtilsEnum.CdrStatus.SUCCESS,
                 UtilsEnum.CdrStatus.RETRY,
                 UtilsEnum.CdrStatus.FAILED
         };
@@ -154,22 +163,19 @@ class UtilsEnumTest {
     @Test
     void testGlobalTitleIndicatorEnumValues() {
         UtilsEnum.GlobalTitleIndicator[] expectedValues = {
+                UtilsEnum.GlobalTitleIndicator.GT0001,
+                UtilsEnum.GlobalTitleIndicator.GT0010,
+                UtilsEnum.GlobalTitleIndicator.GT0011,
                 UtilsEnum.GlobalTitleIndicator.GT0100,
-                UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY,
-                UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY,
-                UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME,
-                UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS
         };
-
         assertArrayEquals(expectedValues, UtilsEnum.GlobalTitleIndicator.values());
     }
 
     @Test
     void testGlobalTitleIndicatorEnumNumber() {
-        assertEquals("01040", UtilsEnum.GlobalTitleIndicator.GT0100.number);
-        assertEquals("0001", UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY.number);
-        assertEquals("0010", UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY.number);
-        assertEquals("0011", UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME.number);
-        assertEquals("0100", UtilsEnum.GlobalTitleIndicator.GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS.number);
+        assertEquals("GT0001", UtilsEnum.GlobalTitleIndicator.GT0001.toString());
+        assertEquals("GT0010", UtilsEnum.GlobalTitleIndicator.GT0010.toString());
+        assertEquals("GT0011", UtilsEnum.GlobalTitleIndicator.GT0011.toString());
+        assertEquals("GT0100", UtilsEnum.GlobalTitleIndicator.GT0100.toString());
     }
 }

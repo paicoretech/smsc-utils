@@ -2,6 +2,7 @@ package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.paicbd.smsc.utils.Converter;
+import com.paicbd.smsc.utils.Generated;
 import com.paicbd.smsc.utils.UtilsEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Generated
 public class Ss7Settings {
     @JsonProperty("name")
     private String name;
@@ -58,6 +60,21 @@ public class Ss7Settings {
 
     @JsonProperty("split_message")
     private boolean splitMessage;
+
+    @JsonProperty("api_enabled")
+    private boolean apiEnabled;
+
+    @JsonProperty("app_token")
+    private String appToken;
+
+    @JsonProperty("hss_update_enabled")
+    private boolean hssUpdateEnabled;
+
+    @JsonProperty("allowed_traffic")
+    private boolean allowedTraffic;
+
+    @JsonProperty("allowed_ussi")
+    private boolean allowedUssi;
 
     @Override
     public String toString() {

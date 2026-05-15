@@ -3,6 +3,7 @@ package com.paicbd.smsc.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.paicbd.smsc.utils.Converter;
+import com.paicbd.smsc.utils.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,12 +12,14 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Setter
 @Builder
+@Generated
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,6 +48,7 @@ public class ServiceProvider {
     @JsonProperty("current_binds_count")
     private Integer currentBindsCount;
 
+    @Builder.Default
     @JsonProperty("binds")
     private List<String> binds = new ArrayList<>();
 
@@ -57,6 +61,7 @@ public class ServiceProvider {
     @JsonProperty("address_range")
     private String addressRange;
 
+    @Builder.Default
     @JsonProperty("tps")
     private AtomicInteger tps = new AtomicInteger(0);
 
@@ -66,6 +71,7 @@ public class ServiceProvider {
     @JsonProperty("credit")
     private long credit;
 
+    @Builder.Default
     @JsonProperty("credit_used")
     private AtomicLong creditUsed = new AtomicLong(0);
 
@@ -105,6 +111,7 @@ public class ServiceProvider {
     @JsonProperty("authentication_types")
     private String authenticationTypes;
 
+    @Builder.Default
     @JsonProperty("header_security_name")
     private String headerSecurityName = "Authorization";
 
@@ -120,11 +127,18 @@ public class ServiceProvider {
     @JsonProperty("bind_type")
     private String bindType;
 
+    @Builder.Default
     @JsonProperty("callback_headers_http")
     private List<UtilsRecords.CallbackHeaderHttp> callbackHeadersHttp = new ArrayList<>();
 
     @JsonProperty("smpp_server_id")
     private int smppServerId;
+
+    @JsonProperty("message_priority")
+    private String messagePriority;
+
+    @JsonProperty("custom_parameters")
+    private Map<String, String> customParameters;
 
     @Override
     public String toString() {

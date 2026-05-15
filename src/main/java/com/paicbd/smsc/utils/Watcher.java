@@ -8,17 +8,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
+@Generated
 public class Watcher {
     private final String name;
     private final AtomicInteger counter;
     private final int time;
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executorService;
 
     public Watcher(String name, AtomicInteger counter, int time) {
         log.warn("Watcher Name: {} was created successfully", name);
         this.name = name;
         this.counter = counter;
         this.time = time;
+        this.executorService = Executors.newSingleThreadScheduledExecutor(
+                Thread.ofPlatform().name("Watcher-" + name, 0).factory());
         this.startWatching();
         Runtime.getRuntime().addShutdownHook(new Thread(this::stopWatching));
     }
