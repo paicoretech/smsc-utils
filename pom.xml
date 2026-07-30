@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.paicbd</groupId>
     <artifactId>smsc-utils</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <name>smsc-utils</name>
     <description>Utility Module for SMSC</description>
     <licenses>
@@ -56,7 +56,34 @@
         <jacoco.version>0.8.12</jacoco.version>
         <webflux.version>3.3.5</webflux.version>
         <reactor.test.version>3.7.0</reactor.test.version>
+        <apache.cassandra.version>4.19.0</apache.cassandra.version>
+        <spring.kafka.version>3.3.7</spring.kafka.version>
+        <jackson.version>2.18.1</jackson.version>
+        <bucket4j.version>8.1.0</bucket4j.version>
     </properties>
+    <distributionManagement>
+        <repository>
+            <id>paicbd</id>
+            <name>localhost-releases</name>
+            <url>https://repository.ws-paicbd.com/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>localhost-snapshots</name>
+            <url>https://repository.ws-paicbd.com/artifactory/libs-release-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -94,6 +121,21 @@
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-core</artifactId>
+            <version>${apache.cassandra.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+            <version>${spring.kafka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>java-driver-query-builder</artifactId>
+            <version>${apache.cassandra.version}</version>
+        </dependency>
         <!-- TESTING DEPENDENCIES -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -119,13 +161,6 @@
             <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- FOR TESTING GETTER AND SETTER -->
-        <dependency>
-            <groupId>com.google.code.bean-matchers</groupId>
-            <artifactId>bean-matchers</artifactId>
-            <version>${bean.matchers.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
@@ -137,11 +172,22 @@
             <version>${reactor.test.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.dataformat/jackson-dataformat-xml -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
-            <version>2.18.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>${bucket4j.version}</version>
         </dependency>
     </dependencies>
 

@@ -2,7 +2,9 @@ package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.paicbd.smsc.interpreter.PayloadMapper;
 import com.paicbd.smsc.utils.Converter;
+import com.paicbd.smsc.utils.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +16,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@Generated
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -105,6 +108,7 @@ public class Gateway {
     @JsonProperty("message_id_decimal_format")
     private boolean messageIdDecimalFormat;
 
+    @Builder.Default
     @JsonProperty("active_sessions_numbers")
     private int successSession = 0;
 
@@ -114,12 +118,15 @@ public class Gateway {
     @JsonProperty("auto_retry_error_code")
     private String autoRetryErrorCode;
 
+    @Builder.Default
     @JsonProperty("encoding_iso88591")
     private int encodingIso88591 = 3;
 
+    @Builder.Default
     @JsonProperty("encoding_gsm7")
     private int encodingGsm7 = 0;
 
+    @Builder.Default
     @JsonProperty("encoding_ucs2")
     private int encodingUcs2 = 2;
 
@@ -128,6 +135,40 @@ public class Gateway {
 
     @JsonProperty("split_smpp_type")
     private String splitSmppType;
+
+    @Builder.Default
+    @JsonProperty("tls_enabled")
+    private boolean tlsEnabled = false;
+
+    private List<PayloadMapper> interpreter;
+
+    @JsonProperty("authentication_types")
+    private String authenticationTypes;
+
+    @Builder.Default
+    @JsonProperty("header_security_name")
+    private String headerSecurityName = "Authorization";
+
+    @JsonProperty("user_name")
+    private String userName;
+
+    @JsonProperty("passwd")
+    private String passwd;
+
+    @JsonProperty("token")
+    private String token;
+
+    @JsonProperty("messages_per_second")
+    private int messagesPerSecond;
+
+    @JsonProperty("messages_per_second_high")
+    private int messagesPerSecondHigh;
+
+    @JsonProperty("messages_per_second_medium")
+    private int messagesPerSecondMedium;
+
+    @JsonProperty("messages_per_second_low")
+    private int messagesPerSecondLow;
 
     @Override
     public String toString() {

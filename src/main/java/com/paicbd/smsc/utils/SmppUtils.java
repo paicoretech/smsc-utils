@@ -5,6 +5,7 @@ import com.paicbd.smsc.dto.GeneralSettings;
 import com.paicbd.smsc.dto.MessageEvent;
 import com.paicbd.smsc.dto.UtilsRecords;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.bean.MessageRequest;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameters;
 import org.jsmpp.util.HexUtil;
@@ -14,10 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.paicbd.smsc.utils.SmppEncoding.DCS_0;
-import static com.paicbd.smsc.utils.SmppEncoding.DCS_3;
-import static com.paicbd.smsc.utils.SmppEncoding.DCS_8;
-
 @Slf4j
 public class SmppUtils {
 
@@ -26,21 +23,33 @@ public class SmppUtils {
         throw new IllegalStateException("Utility Class");
     }
 
-    public static int determineEncodingType(int encodingType, GeneralSettings smppGeneralSettings) {
-        return determineEncodingType(encodingType, smppGeneralSettings.getEncodingGsm7(), smppGeneralSettings.getEncodingUcs2(), smppGeneralSettings.getEncodingIso88591());
+    private static String getValueAsString(byte[] byteArray) {
+        if (byteArray == null || byteArray.length == 0) {
+            return "";
+        }
+        int length = byteArray.length;
+        if (byteArray[length - 1] == 0x00) {
+            length -= 1;
+        }
+        return new String(byteArray, 0, length);
     }
 
-    public static int determineEncodingType(int encodingType, Gateway gateway) {
-        return determineEncodingType(encodingType, gateway.getEncodingGsm7(), gateway.getEncodingUcs2(), gateway.getEncodingIso88591());
+    public static int determineEncodingType(int dataCoding, GeneralSettings smppGeneralSettings) {
+        return determineEncodingType(dataCoding, smppGeneralSettings.getEncodingGsm7(), smppGeneralSettings.getEncodingUcs2(), smppGeneralSettings.getEncodingIso88591());
     }
 
-    private static int determineEncodingType(int encodingType, int encodingGsm7, int encodingUcs2, int encodingIso88591) {
-        return switch (encodingType) {
-            case DCS_0 -> encodingGsm7;
-            case DCS_8 -> encodingUcs2;
-            case DCS_3 -> encodingIso88591;
-            default -> throw new IllegalStateException("Unexpected value: " + encodingType);
-        };
+    public static int determineEncodingType(int dataCoding, Gateway gateway) {
+        return determineEncodingType(dataCoding, gateway.getEncodingGsm7(), gateway.getEncodingUcs2(), gateway.getEncodingIso88591());
+    }
+
+    private static int determineEncodingType(int dataCoding, int encodingGsm7, int encodingUcs2, int encodingIso88591) {
+        if (EncodingUtils.GSM7_DATA_CODINGS.contains(dataCoding)) {
+            return encodingGsm7;
+        } else if (EncodingUtils.UCS2_DATA_CODINGS.contains(dataCoding)) {
+            return encodingUcs2;
+        } else {
+            return encodingIso88591;
+        }
     }
 
     public static OptionalParameter[] getTLV(MessageEvent smppMessage) {
@@ -70,8 +79,6 @@ public class SmppUtils {
                                      DEST_ADDR_NP_INFORMATION,
                                      DEST_NODE_ID,
                                      DEST_SUBADDRESS,
-                                     MESSAGE_PAYLOAD,
-                                     NETWORK_ERROR_CODE,
                                      SOURCE_NODE_ID,
                                      SOURCE_SUBADDRESS,
                                      VENDOR_SPECIFIC_DEST_MSC_ADDR,
@@ -133,6 +140,14 @@ public class SmppUtils {
                                     optionalParameters.add(OptionalParameters.deserialize(tlv.tag(), bytes));
                                     break;
 
+                                case NETWORK_ERROR_CODE:
+                                    optionalParameters.add(new OptionalParameter.Network_error_code(EncodingUtils.hexToBytes(tlv.value())));
+                                    break;
+
+                                case MESSAGE_PAYLOAD:
+                                    optionalParameters.add(new OptionalParameter.Message_payload(EncodingUtils.hexToBytes(tlv.value())));
+                                    break;
+
                                 default:
                                     int intValue = Integer.parseInt(tlv.value());
                                     String hexValue = HexUtil.convertByteToHexString((byte) intValue);
@@ -191,16 +206,16 @@ public class SmppUtils {
             case QOS_TIME_TO_LIVE -> new OptionalParameter.Qos_time_to_live(content).getValue() + "";
             case PAYLOAD_TYPE -> Byte.toString(new OptionalParameter.Payload_type(content).getValue());
             case ADDITIONAL_STATUS_INFO_TEXT ->
-                    new OptionalParameter.Additional_status_info_text(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Additional_status_info_text(content).getValue());
             case RECEIPTED_MESSAGE_ID ->
-                    new OptionalParameter.Receipted_message_id(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Receipted_message_id(content).getValue());
             case MS_MSG_WAIT_FACILITIES ->
                     Byte.toString(new OptionalParameter.Ms_msg_wait_facilities(content).getValue());
             case PRIVACY_INDICATOR ->
                     Byte.toString(new OptionalParameter.Privacy_indicator(content).getValue());
             case SOURCE_SUBADDRESS ->
-                    new OptionalParameter.Source_subaddress(content).getValueAsString();
-            case DEST_SUBADDRESS -> new OptionalParameter.Dest_subaddress(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Source_subaddress(content).getValue());
+            case DEST_SUBADDRESS -> getValueAsString(new OptionalParameter.Dest_subaddress(content).getValue());
             case USER_MESSAGE_REFERENCE -> new OptionalParameter.User_message_reference(content).getValue() + "";
             case USER_RESPONSE_CODE ->
                     Byte.toString(new OptionalParameter.User_response_code(content).getValue());
@@ -218,19 +233,18 @@ public class SmppUtils {
             case CALLBACK_NUM_PRES_IND ->
                     Byte.toString(new OptionalParameter.Callback_num_pres_ind(content).getValue());
             case CALLBACK_NUM_ATAG ->
-                    new OptionalParameter.Callback_num_atag(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Callback_num_atag(content).getValue());
             case NUMBER_OF_MESSAGES ->
                     Byte.toString(new OptionalParameter.Number_of_messages(content).getValue());
             case CALLBACK_NUM ->
-                    new OptionalParameter.Callback_num(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Callback_num(content).getValue());
             case DPF_RESULT -> Byte.toString(new OptionalParameter.Dpf_result(content).getValue());
             case SET_DPF -> Byte.toString(new OptionalParameter.Set_dpf(content).getValue());
             case MS_AVAILABILITY_STATUS ->
                     Byte.toString(new OptionalParameter.Ms_availability_status(content).getValue());
             case NETWORK_ERROR_CODE ->
-                    new OptionalParameter.Network_error_code(content).getValueAsString();
-            case MESSAGE_PAYLOAD ->
-                    new OptionalParameter.Message_payload(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Network_error_code(content).getValue());
+            case MESSAGE_PAYLOAD -> EncodingUtils.bytesToHex(content);
             case DELIVERY_FAILURE_REASON ->
                     Byte.toString(new OptionalParameter.Delivery_failure_reason(content).getValue());
             case MORE_MESSAGES_TO_SEND ->
@@ -244,39 +258,39 @@ public class SmppUtils {
             case BROADCAST_CHANNEL_INDICATOR ->
                     Byte.toString(new OptionalParameter.Broadcast_channel_indicator(content).getValue());
             case BROADCAST_CONTENT_TYPE ->
-                    new OptionalParameter.Broadcast_content_type(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_content_type(content).getValue());
             case BROADCAST_CONTENT_TYPE_INFO ->
-                    new OptionalParameter.Broadcast_content_type_info(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_content_type_info(content).getValue());
             case BROADCAST_MESSAGE_CLASS ->
                     Byte.toString(new OptionalParameter.Broadcast_message_class(content).getValue());
             case BROADCAST_REP_NUM -> new OptionalParameter.Broadcast_rep_num(content).getValue() + "";
             case BROADCAST_FREQUENCY_INTERVAL ->
-                    new OptionalParameter.Broadcast_frequency_interval(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_frequency_interval(content).getValue());
             case BROADCAST_AREA_IDENTIFIER ->
-                    new OptionalParameter.Broadcast_area_identifier(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_area_identifier(content).getValue());
             case BROADCAST_ERROR_STATUS -> new OptionalParameter.Broadcast_error_status(content).getValue() + "";
             case BROADCAST_AREA_SUCCESS ->
                     Byte.toString(new OptionalParameter.Broadcast_area_success(content).getValue());
             case BROADCAST_END_TIME ->
-                    new OptionalParameter.Broadcast_end_time(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_end_time(content).getValue());
             case BROADCAST_SERVICE_GROUP ->
-                    new OptionalParameter.Broadcast_service_group(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Broadcast_service_group(content).getValue());
             case BILLING_IDENTIFICATION ->
-                    new OptionalParameter.Billing_identification(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Billing_identification(content).getValue());
             case SOURCE_NETWORK_ID ->
-                    new OptionalParameter.Source_network_id(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Source_network_id(content).getValue());
             case DEST_NETWORK_ID ->
-                    new OptionalParameter.Dest_network_id(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Dest_network_id(content).getValue());
             case SOURCE_NODE_ID ->
-                    new OptionalParameter.Source_node_id(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Source_node_id(content).getValue());
             case DEST_NODE_ID ->
-                    new OptionalParameter.Dest_node_id(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Dest_node_id(content).getValue());
             case DEST_ADDR_NP_RESOLUTION ->
                     Byte.toString(new OptionalParameter.Dest_addr_np_resolution(content).getValue());
             case DEST_ADDR_NP_INFORMATION ->
-                    new OptionalParameter.Dest_addr_np_information(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Dest_addr_np_information(content).getValue());
             case DEST_ADDR_NP_COUNTRY ->
-                    new OptionalParameter.Dest_addr_np_country(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Dest_addr_np_country(content).getValue());
             case DISPLAY_TIME -> Byte.toString(new OptionalParameter.Display_time(content).getValue());
             case SMS_SIGNAL -> new OptionalParameter.Sms_signal(content).getValue() + "";
             case MS_VALIDITY -> Byte.toString(new OptionalParameter.Ms_validity(content).getValue());
@@ -286,9 +300,37 @@ public class SmppUtils {
                     Byte.toString(new OptionalParameter.Its_reply_type(content).getValue());
             case ITS_SESSION_INFO -> new OptionalParameter.Its_session_info(content).getValue() + "";
             case VENDOR_SPECIFIC_SOURCE_MSC_ADDR ->
-                    new OptionalParameter.Vendor_specific_source_msc_addr(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Vendor_specific_source_msc_addr(content).getValue());
             case VENDOR_SPECIFIC_DEST_MSC_ADDR ->
-                    new OptionalParameter.Vendor_specific_dest_msc_addr(content).getValueAsString();
+                    getValueAsString(new OptionalParameter.Vendor_specific_dest_msc_addr(content).getValue());
+        };
+    }
+
+    public static byte[] getMessagePayloadValue(MessageRequest messageRequest) {
+        OptionalParameter[] optionalParameters = messageRequest.getOptionalParameters();
+        if (optionalParameters != null) {
+            return Arrays.stream(optionalParameters)
+                    .filter(OptionalParameter.Message_payload.class::isInstance)
+                    .map(OptionalParameter.Message_payload.class::cast)
+                    .map(OptionalParameter.Message_payload::getValue)
+                    .findFirst()
+                    .orElse(new byte[0]);
+        }
+        return new byte[0];
+    }
+
+    public static byte[] getNetworkErrorCode(int errorCode) {
+        if (errorCode < 0 || errorCode > 0xFFFF) {
+            // Special case, if the errorCode is negative of higher than 65,535
+            // First byte set as Network Type Reserved according to SMPPv3.4
+            return new byte[]{0x04, (byte) 0xFF, (byte) 0xFF};
+        }
+
+        // First byte set as Network Type GSM according to SMPPv3.4 and v5.0
+        return new byte[] {
+                0x03,
+                (byte) ((errorCode >> 8) & 0xFF),
+                (byte) (errorCode & 0xFF)
         };
     }
 }

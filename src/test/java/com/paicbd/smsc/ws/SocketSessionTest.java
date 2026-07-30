@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.stomp.StompSession;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class SocketSessionTest {
@@ -24,12 +24,18 @@ class SocketSessionTest {
 
     @Test
     void sendStatusTest() {
-        // Successfully
+        // Verify message sending when StompSession is available
         socketSession.setStompSession(stompSession);
-        assertDoesNotThrow(() -> socketSession.sendStatus("systemId", "param", "value"));
+        socketSession.sendStatus("systemId", "param", "value");
 
-        // Null StompSession
+        // Verify stompSession.send was called with correct destination and message format
+        verify(stompSession).send("/app/handler-status", "gw,systemId,param,value");
+
+        // Verify no interaction when StompSession is null
         socketSession.setStompSession(null);
-        assertDoesNotThrow(() -> socketSession.sendStatus("systemId", "param", "value"));
+        socketSession.sendStatus("systemId", "param", "value");
+
+        // Verify no additional calls to send method
+        verify(stompSession).send("/app/handler-status", "gw,systemId,param,value");
     }
 }

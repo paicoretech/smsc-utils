@@ -121,31 +121,38 @@ public class UtilsEnum {
         SS7_CLIENT,
         ROUTING,
         ORCHESTRATOR,
-        RETRIES
+        RETRIES,
+        DIAMETER,
+        SIP
     }
 
     public enum MessageType {
         MESSAGE,
         DELIVER,
+        SS7API_SRI,
+        SS7API_MT,
+        SS7API_MESSAGE,
+        HR_SRI,
+        HR_MESSAGE
     }
 
     public enum CdrStatus {
         RECEIVED,
         ENQUEUE,
-        SENT,
+        SUCCESS,
         RETRY,
         FAILED
     }
 
     public enum GlobalTitleIndicator {
-        GT0100("01040"),
-        GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY("0001"),
-        GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY("0010"),
-        GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME("0011"),
-        GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS("0100");
-        public final String number;
-        GlobalTitleIndicator(String number) {
-            this.number = number;
+        GT0001("GLOBAL_TITLE_INCLUDES_NATURE_OF_ADDRESS_INDICATOR_ONLY"),
+        GT0010("GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_ONLY"),
+        GT0011("GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_AND_ENCODING_SCHEME"),
+        GT0100("GLOBAL_TITLE_INCLUDES_TRANSLATION_TYPE_NUMBERING_PLAN_ENCODING_SCHEME_AND_NATURE_OF_ADDRESS");
+
+        public final String gtName;
+        GlobalTitleIndicator(String gtName) {
+            this.gtName = gtName;
         }
     }
 }
