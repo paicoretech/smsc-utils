@@ -95,6 +95,23 @@ class KafkaUtilsTest {
         assertTrue(dlrTopicError.getMessage().contains("DLR destination topic not found"));
     }
 
+    @ParameterizedTest
+    @MethodSource("ss7TopicParams")
+    void ss7MessageTopicUsesSuppliedNetworkWithoutChangingMessageDestination(
+            int networkId, String priority, String expectedSuffix) {
+        assertEquals(networkId + expectedSuffix,
+                KafkaUtils.getSs7ChargingDestinationTopic(networkId, priority));
+    }
+
+    private static Stream<Arguments> ss7TopicParams() {
+        return Stream.of(
+                Arguments.of(303, HIGH, KafkaTopicsConstants.SS7_HIGH_MESSAGE_TOPIC_SUFFIX),
+                Arguments.of(303, MEDIUM, KafkaTopicsConstants.SS7_MEDIUM_MESSAGE_TOPIC_SUFFIX),
+                Arguments.of(303, LOW, KafkaTopicsConstants.SS7_LOW_MESSAGE_TOPIC_SUFFIX),
+                Arguments.of(303, "UNKNOWN", KafkaTopicsConstants.SS7_MEDIUM_MESSAGE_TOPIC_SUFFIX)
+        );
+    }
+
 
     @ParameterizedTest(name = "priority={0} -> topic={1}")
     @MethodSource("priorityProviderForRouting")

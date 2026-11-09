@@ -11,6 +11,16 @@ import static java.util.Map.entry;
 
 public class ErrorCodes {
 
+    private static final String BAD_REQUEST = "Bad Request";
+    private static final String UNAUTHORIZED = "Unauthorized";
+    private static final String FORBIDDEN = "Forbidden";
+    private static final String NOT_FOUND = "Not Found";
+    private static final String UNSUPPORTED_MEDIA_TYPE = "Unsupported Media Type";
+    private static final String INTERNAL_SERVER_ERROR = "Internal Server Error";
+    private static final String BAD_GATEWAY = "Bad Gateway";
+    private static final String SERVICE_UNAVAILABLE = "Service Unavailable";
+    private static final String GATEWAY_TIMEOUT = "Gateway Timeout";
+
     static final Map<Integer, String> smppErrorMapping = new ConcurrentHashMap<>();
     static final Map<Integer, String> ss7ErrorMapping = new ConcurrentHashMap<>();
     static final Map<Integer, String> httpErrorMapping = new ConcurrentHashMap<>();
@@ -18,6 +28,7 @@ public class ErrorCodes {
     static final Map<Integer, String> smscErrorMapping = new ConcurrentHashMap<>();
     static final Map<Integer, Map<Integer, String>> ss7SubError = new ConcurrentHashMap<>();
     static final Map<Integer, String> sipErrorMapping = new ConcurrentHashMap<>();
+    static final Map<Integer, String> http2ErrorMapping = new ConcurrentHashMap<>();
 
 
     static {
@@ -94,6 +105,7 @@ public class ErrorCodes {
         smppErrorMapping.put(505, "Invalid Response Exception");
         smppErrorMapping.put(506, "IO Exception");
         smppErrorMapping.put(513, "SMPP Connection Unavailable (No active session)");
+        smppErrorMapping.put(521, "SMPP Connection Unavailable (Removing From Cache)");
 
         ss7ErrorMapping.put(1, "Unknown Subscriber");
         ss7ErrorMapping.put(2, "Unknown Base Station");
@@ -162,26 +174,29 @@ public class ErrorCodes {
         ss7ErrorMapping.put(510, "MW Status MNRF Set (Absent Subscriber)");
         ss7ErrorMapping.put(511, "MW Status MCEF Set (Memory Capacity Exceeded)");
         ss7ErrorMapping.put(512, "Reject Component");
+        ss7ErrorMapping.put(514, "SCCP Delivery Failure");
         ss7ErrorMapping.put(520, "Invalid Source Address TON");
         ss7ErrorMapping.put(801, "Missing MCC–MNC Routing Data");
+        ss7ErrorMapping.put(803, "Message part skipped due to previous part failure");
 
-        httpErrorMapping.put(400, "Bad Request");
-        httpErrorMapping.put(401, "Unauthorized");
-        httpErrorMapping.put(403, "Forbidden");
-        httpErrorMapping.put(404, "Not Found");
+        httpErrorMapping.put(400, BAD_REQUEST);
+        httpErrorMapping.put(401, UNAUTHORIZED);
+        httpErrorMapping.put(403, FORBIDDEN);
+        httpErrorMapping.put(404, NOT_FOUND);
         httpErrorMapping.put(405, "Method Not Allowed");
         httpErrorMapping.put(408, "Request Timeout");
         httpErrorMapping.put(409, "Conflict");
         httpErrorMapping.put(410, "Gone");
-        httpErrorMapping.put(415, "Unsupported Media Type");
+        httpErrorMapping.put(415, UNSUPPORTED_MEDIA_TYPE);
         httpErrorMapping.put(429, "Too Many Requests");
-        httpErrorMapping.put(500, "Internal Server Error");
+        httpErrorMapping.put(500, INTERNAL_SERVER_ERROR);
         httpErrorMapping.put(501, "Not Implemented");
-        httpErrorMapping.put(502, "Bad Gateway");
-        httpErrorMapping.put(503, "Service Unavailable");
-        httpErrorMapping.put(504, "Gateway Timeout");
+        httpErrorMapping.put(502, BAD_GATEWAY);
+        httpErrorMapping.put(503, SERVICE_UNAVAILABLE);
+        httpErrorMapping.put(504, GATEWAY_TIMEOUT);
 
         diameterErrorMapping.put(600, "Charging Error");
+        diameterErrorMapping.put(804, "No MCC/MNC Configured For Charging Address");
         diameterErrorMapping.put(1001, "Diameter Multi Round Auth");
         diameterErrorMapping.put(2001, "Diameter Success");
         diameterErrorMapping.put(2002, "Diameter Limited Success");
@@ -243,6 +258,91 @@ public class ErrorCodes {
         smscErrorMapping.put(702, "Blocked By Network DND");
         smscErrorMapping.put(703, "Blocked by Sender DND");
         smscErrorMapping.put(802, "Not Destination Address Registered");
+        smscErrorMapping.put(804, "No MCC/MNC Configured For Charging Address");
+
+        sipErrorMapping.put(1, "Unassigned (unallocated) number");
+        sipErrorMapping.put(2, "Sip transport error");
+        sipErrorMapping.put(8, "Operator determined barring");
+        sipErrorMapping.put(10, "Call barred");
+        sipErrorMapping.put(11, "Reserved");
+        sipErrorMapping.put(21, "Short message transfer rejected");
+        sipErrorMapping.put(22, "Memory capacity exceeded");
+        sipErrorMapping.put(27, "Destination out of order");
+        sipErrorMapping.put(28, "Unidentified subscriber");
+        sipErrorMapping.put(29, "Facility rejected");
+        sipErrorMapping.put(30, "Unknown subscriber");
+        sipErrorMapping.put(38, "Network out of order");
+        sipErrorMapping.put(41, "Temporary failure");
+        sipErrorMapping.put(42, "Congestion");
+        sipErrorMapping.put(47, "Resources unavailable unspecified");
+        sipErrorMapping.put(50, "Requested facility not subscribed");
+        sipErrorMapping.put(69, "Requested facility not implemented");
+        sipErrorMapping.put(81, "Invalid short message transfer reference value");
+        sipErrorMapping.put(95, "Semantically incorrect message");
+        sipErrorMapping.put(96, "Invalid mandatory information");
+        sipErrorMapping.put(97, "Message type non-existent or not implemented");
+        sipErrorMapping.put(98, "Message not compatible with short message protocol state");
+        sipErrorMapping.put(99, "Information element non-existent or not implemented");
+        sipErrorMapping.put(111, "Protocol error unspecified");
+        sipErrorMapping.put(127, "Interworking unspecified");
+        sipErrorMapping.put(300, "TimeOut");
+        sipErrorMapping.put(400, BAD_REQUEST);
+        sipErrorMapping.put(401, UNAUTHORIZED);
+        sipErrorMapping.put(403, FORBIDDEN);
+        sipErrorMapping.put(404, NOT_FOUND);
+        sipErrorMapping.put(405, "Method Not Allowed");
+        sipErrorMapping.put(408, "Request Timeout");
+        sipErrorMapping.put(409, "Conflict");
+        sipErrorMapping.put(410, "Gone");
+        sipErrorMapping.put(413, "Request Entity Too Large");
+        sipErrorMapping.put(414, "Request-URI Too Long");
+        sipErrorMapping.put(415, UNSUPPORTED_MEDIA_TYPE);
+        sipErrorMapping.put(416, "Unsupported URI Scheme");
+        sipErrorMapping.put(420, "Bad Extension");
+        sipErrorMapping.put(421, "Extension Required");
+        sipErrorMapping.put(423, "Interval Too Brief");
+        sipErrorMapping.put(480, "Temporarily Unavailable");
+        sipErrorMapping.put(481, "Call/Transaction Does Not Exist");
+        sipErrorMapping.put(482, "Loop Detected");
+        sipErrorMapping.put(483, "Too Many Hops");
+        sipErrorMapping.put(484, "Address Incomplete");
+        sipErrorMapping.put(485, "Ambiguous");
+        sipErrorMapping.put(486, "Busy Here");
+        sipErrorMapping.put(487, "Request Terminated");
+        sipErrorMapping.put(488, "Not Acceptable Here");
+        sipErrorMapping.put(491, "Request Pending");
+        sipErrorMapping.put(493, "Undecipherable");
+        sipErrorMapping.put(500, INTERNAL_SERVER_ERROR);
+        sipErrorMapping.put(501, "Not Implemented");
+        sipErrorMapping.put(502, BAD_GATEWAY);
+        sipErrorMapping.put(503, SERVICE_UNAVAILABLE);
+        sipErrorMapping.put(504, GATEWAY_TIMEOUT);
+        sipErrorMapping.put(505, "Version Not Supported");
+        sipErrorMapping.put(506, "IO Exception");
+        sipErrorMapping.put(513, "Message Too Large");
+        sipErrorMapping.put(600, "Busy Everywhere");
+        sipErrorMapping.put(603, "Decline");
+        sipErrorMapping.put(606, "Not Acceptable");
+
+        http2ErrorMapping.put(400, BAD_REQUEST);
+        http2ErrorMapping.put(401, UNAUTHORIZED);
+        http2ErrorMapping.put(403, FORBIDDEN);
+        http2ErrorMapping.put(404, NOT_FOUND);
+        http2ErrorMapping.put(411, "Length Required");
+        http2ErrorMapping.put(413, "Payload Too Large");
+        http2ErrorMapping.put(415, UNSUPPORTED_MEDIA_TYPE);
+        http2ErrorMapping.put(422, "Unprocessable Entity");
+        http2ErrorMapping.put(429, "Too Many Requests");
+        http2ErrorMapping.put(500, INTERNAL_SERVER_ERROR);
+        http2ErrorMapping.put(502, BAD_GATEWAY);
+        http2ErrorMapping.put(503, SERVICE_UNAVAILABLE);
+        http2ErrorMapping.put(504, GATEWAY_TIMEOUT);
+        http2ErrorMapping.put(520, "UE Not Responding");
+        http2ErrorMapping.put(521, "UE Not Reachable For Session");
+        http2ErrorMapping.put(522, "N1 Message Not Transferred");
+        http2ErrorMapping.put(523, "N1N2 Failure Callback");
+        http2ErrorMapping.put(524, "UE Temporary Reject");
+        http2ErrorMapping.put(525, "N1N2 Correlation Timeout");
 
         ss7SubError.put(32, Map.of(
                 0, "Memory Capacity Exceeded",
@@ -294,6 +394,36 @@ public class ErrorCodes {
                 0, "Barring Service Active",
                 1, "Operator Barring"
         ));
+
+        // SCCP return causes (ITU-T Q.714). Keys are the ReturnCauseValue codes, unrelated to the
+        // MAP error codes used by the entries above - the same numeric value means different things
+        // in each namespace.
+        ss7SubError.put(514, Map.ofEntries(
+                Map.entry(0x0, "No Translation For Nature Of Address"),
+                Map.entry(0x1, "No Translation For This Address"),
+                Map.entry(0x2, "Subsystem Congestion"),
+                Map.entry(0x3, "Subsystem Failure"),
+                Map.entry(0x4, "Unequipped User"),
+                Map.entry(0x5, "MTP Failure"),
+                Map.entry(0x6, "Network Congestion"),
+                Map.entry(0x7, "Unqualified"),
+                Map.entry(0x8, "Error In Message Transport"),
+                Map.entry(0x9, "Error In Local Processing"),
+                Map.entry(0xA, "Destination Cannot Perform Reassembly"),
+                Map.entry(0xB, "SCCP Failure"),
+                Map.entry(0xC, "Hop Counter Violation"),
+                Map.entry(0xD, "Segmentation Not Supported"),
+                Map.entry(0xE, "Segmentation Failure"),
+                // ANSI
+                Map.entry(0xF7, "Message Change Failure"),
+                Map.entry(0xF8, "Invalid INS Routing Request"),
+                Map.entry(0xF9, "Invalid ISNI Routing Request"),
+                Map.entry(0xFA, "Unauthorized Message"),
+                Map.entry(0xFB, "Message Incompatibility"),
+                Map.entry(0xFC, "Cannot Perform ISNI Constrained Routing"),
+                Map.entry(0xFD, "Redundant ISNI Constrained Routing Information"),
+                Map.entry(0xFE, "Unable To Perform ISNI Identification")
+        ));
     }
 
 
@@ -312,15 +442,28 @@ public class ErrorCodes {
     public static final int MW_STATUS_MCEF_SET_ERROR = 511;
     public static final int MAP_REJECT_COMPONENT = 512;
     public static final int SMPP_CONNECTION_UNAVAILABLE = 513;
+    public static final int SCCP_DELIVERY_FAILURE = 514;
     public static final int INVALID_SOURCE_ADDR_TON = 520;
+    public static final int SMPP_CONNECTION_UNAVAILABLE_EVICTION = 521;
     public static final int CHARGING_ERROR = 600;
     public static final String SUB_ERROR_KEY = "sub_error";
     public static final int BLOCKED_BY_DND_GLOBAL = 701;
     public static final int BLOCKED_BY_DND_NETWORK = 702;
     public static final int BLOCKED_BY_DND_SENDER = 703;
     public static final int MCC_MNC_NO_FOUND = 801;
+    public static final int SIP_CONGESTION = 42;
+    public static final int SIP_TRANSPORT_ERROR = 2;
+    public static final int REQUEST_TERMINATED = 487;
 
     public static final int NOT_DESTINATION_ADDR_REGISTERED = 802;
+    public static final int PART_SKIPPED_PREVIOUS_FAILURE = 803;
+    public static final int SMSF_UE_NOT_RESPONDING = 520;
+    public static final int SMSF_UE_NOT_REACHABLE_FOR_SESSION = 521;
+    public static final int SMSF_N1_MSG_NOT_TRANSFERRED = 522;
+    public static final int SMSF_N1N2_FAILURE_CALLBACK = 523;
+    public static final int SMSF_UE_TEMPORARY_REJECT = 524;
+    public static final int SMSF_N1N2_CORRELATION_TIMEOUT = 525;
+    public static final int MCC_MNC_CHARGING_NOT_CONFIGURED = 804;
 
     private ErrorCodes() {
         throw new IllegalStateException("Utility class");
@@ -332,6 +475,7 @@ public class ErrorCodes {
         return switch (module) {
             case SMPP_CLIENT, SMPP_SERVER -> smppErrorMapping.getOrDefault(errorCode, defaultError);
             case HTTP_CLIENT, HTTP_SERVER -> httpErrorMapping.getOrDefault(errorCode, defaultError);
+            case HTTP2_CLIENT -> http2ErrorMapping.getOrDefault(errorCode, defaultError);
             case SS7_CLIENT -> {
                 String error = ss7ErrorMapping.getOrDefault(errorCode, defaultError);
                 if (Objects.nonNull(subError)) {

@@ -13,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.jsmpp.bean.OptionalParameter;
 import redis.clients.jedis.Connection;
+import redis.clients.jedis.ConnectionPoolConfig;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.JedisPooled;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Converter {
@@ -70,6 +73,51 @@ public class Converter {
             return jedisCluster;
         } catch (Exception e) {
             log.error("An error occurred while creating JedisCluster instance: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public static RedisManager paramsToRedisManager(UtilsRecords.JedisConfigParams params) {
+        try {
+            boolean isStandalone = params.isStandaloneEnabled();
+            int connectionTimeout = params.connectionTimeout() > 0 ? params.connectionTimeout() : 2000;
+            int soTimeout = params.soTimeout() > 0 ? params.soTimeout() : 2000;
+
+            if (isStandalone) {
+                String[] nodePart = params.redisNodes().getFirst().split(":");
+                String host = nodePart[0];
+                int port = Integer.parseInt(nodePart[1]);
+
+                ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
+                poolConfig.setMaxTotal(params.maxTotal());
+                poolConfig.setMinIdle(params.minIdle());
+                poolConfig.setMaxIdle(params.maxIdle());
+                poolConfig.setBlockWhenExhausted(params.blockWhenExhausted());
+
+                JedisPooled jedisPooled;
+                boolean hasUserAndPassword = !params.user().isEmpty() && !params.password().isEmpty();
+                boolean hasOnlyPassword = params.user().isEmpty() && !params.password().isEmpty();
+
+                if (hasUserAndPassword) {
+                    jedisPooled = new JedisPooled(poolConfig, host, port, connectionTimeout, soTimeout, params.user(), params.password(), 0, null);
+                } else if (hasOnlyPassword) {
+                    jedisPooled = new JedisPooled(poolConfig, host, port, connectionTimeout, soTimeout, params.password(), 0, null);
+                } else {
+                    jedisPooled = new JedisPooled(poolConfig, host, port, connectionTimeout, soTimeout, null, 0, null);
+                }
+
+                log.info("RedisManager (standalone) instance was created successfully with host: {}:{}", host, port);
+                return new RedisManager(jedisPooled);
+            }
+
+            JedisCluster jedisCluster = paramsToJedisCluster(params);
+            if (jedisCluster == null) {
+                return null;
+            }
+            log.info("RedisManager (cluster) instance was created successfully with params: {}", params);
+            return new RedisManager(jedisCluster);
+        } catch (Exception e) {
+            log.error("An error occurred while creating RedisManager instance: {}", e.getMessage());
             return null;
         }
     }
@@ -249,5 +297,17 @@ public class Converter {
     public static String removeLineBreaks(String string) {
         String oneLineString = string.replaceAll("\\r?\\n", " ");
         return oneLineString.trim();
+    }
+
+    public static String listToSeparatedString(List<String> values, String separator) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+
+        String safeSeparator = separator == null ? "," : separator;
+
+        return values.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(safeSeparator));
     }
 }

@@ -1,6 +1,7 @@
 package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.paicbd.smsc.utils.ChargingType;
 import com.paicbd.smsc.utils.Generated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -135,8 +136,31 @@ public class RoutingRule {
     private String newShortMessage;
 
     @Builder.Default
+    @JsonProperty("retry_all_parts")
+    private boolean retryAllParts = true;
+
+    @Builder.Default
     @JsonProperty("diameter_charging")
     private boolean diameterCharging = false;
+
+    @Builder.Default
+    @JsonProperty("charging_type")
+    private ChargingType chargingType = ChargingType.IEC;
+
+    @Builder.Default
+    @JsonProperty("destination_charging")
+    private boolean destinationCharging = false;
+
+    @Builder.Default
+    @JsonProperty("plmn_lookup_enabled")
+    private boolean plmnLookupEnabled = false;
+
+    @Builder.Default
+    @JsonProperty("sri_for_charging")
+    private boolean sriForCharging = false;
+
+    @JsonProperty("network_id_sri_for_charging")
+    private Integer networkIdSriForCharging;
 
     @Builder.Default
     @JsonProperty("apply_for_refund")
@@ -220,6 +244,9 @@ public class RoutingRule {
 
         @JsonProperty("custom_map_layer_source_address_mt")
         private String customMapLayerSourceAddressMt = "";
+
+        @JsonProperty("custom_map_layer_service_centre_address_oa")
+        private String customMapLayerServiceCentreAddressOa = "";
 
         @JsonProperty("priority_flag_sri")
         private boolean priorityFlagSri = true;

@@ -38,6 +38,15 @@ public class DiameterConfig {
     @JsonProperty("allowed_traffic")
     private boolean allowedTraffic;
 
+    @JsonProperty("auto_retry_error_code")
+    private String autoRetryErrorCode;
+
+    @JsonProperty("no_retry_error_code")
+    private String noRetryErrorCode;
+
+    @JsonProperty("retry_alternate_destination_error_code")
+    private String retryAlternateDestinationErrorCode;
+
     @JsonProperty("messages_per_second")
     private int messagesPerSecond;
 

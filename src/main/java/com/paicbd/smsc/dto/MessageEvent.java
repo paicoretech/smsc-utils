@@ -2,6 +2,7 @@ package com.paicbd.smsc.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.paicbd.smsc.utils.ChargingType;
 import com.paicbd.smsc.utils.Converter;
 import com.paicbd.smsc.utils.EncodingUtils;
 import com.paicbd.smsc.utils.GeneralSmscConstants;
@@ -22,6 +23,7 @@ import org.jsmpp.bean.MessageType;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.util.DeliveryReceiptState;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,6 +72,9 @@ public class MessageEvent {
     @JsonProperty("source_addr")
     private String sourceAddr;
 
+    @JsonProperty("source")
+    private String source;
+
     // NatureAddressIndicator
     @JsonProperty("dest_addr_ton")
     private Integer destAddrTon;
@@ -80,6 +85,9 @@ public class MessageEvent {
 
     @JsonProperty("destination_addr")
     private String destinationAddr;
+
+    @JsonProperty("destination")
+    private String destination;
 
     @JsonProperty("command_id")
     private int commandId;
@@ -122,6 +130,25 @@ public class MessageEvent {
 
     @JsonProperty("short_message")
     private String shortMessage;
+
+    /**
+     * Normalizes SMS content at creation time so the event carries no leading or
+     * trailing whitespace through Kafka and subsequent processing stages.
+     */
+    public void setShortMessage(String shortMessage) {
+        this.shortMessage = normalizeShortMessage(shortMessage);
+    }
+
+    /**
+     * Lombok completes this builder class. Declaring this method ensures builder
+     * creation follows the same normalization rule as the setter.
+     */
+    public static class MessageEventBuilder {
+        public MessageEventBuilder shortMessage(String shortMessage) {
+            this.shortMessage = normalizeShortMessage(shortMessage);
+            return this;
+        }
+    }
 
     @JsonProperty("delivery_receipt")
     private String delReceipt;
@@ -231,6 +258,16 @@ public class MessageEvent {
     @JsonProperty("is_last_retry")
     private boolean isLastRetry;
 
+    @JsonProperty("profile_id")
+    private Integer profileId;
+
+    @Builder.Default
+    @JsonProperty("profile_id_history")
+    private List<Integer> profileIdHistory = new ArrayList<>();
+
+    @JsonProperty("retry_profile_data")
+    private RetryProfileData retryProfileData;
+
     @JsonProperty("is_network_notify_error")
     private boolean isNetworkNotifyError;
 
@@ -269,6 +306,12 @@ public class MessageEvent {
 
     @JsonProperty("network_node_number_numbering_plan")
     private Integer networkNodeNumberNumberingPlan;
+
+    @JsonProperty("source_imsi")
+    private String sourceImsi;
+
+    @JsonProperty("source_network_node_number")
+    private String sourceNetworkNodeNumber;
 
     @JsonProperty("mo_message")
     private boolean moMessage;
@@ -313,6 +356,10 @@ public class MessageEvent {
     @JsonProperty("message_parts")
     private List<MessagePart> messageParts;
 
+    @Builder.Default
+    @JsonProperty("retry_all_parts")
+    private boolean retryAllParts = true;
+
     @JsonProperty("split_for_smsc")
     private boolean splitForSmsc = false;
 
@@ -328,6 +375,28 @@ public class MessageEvent {
 
     @JsonProperty("diameter_charging")
     private boolean diameterCharging;
+
+    @Builder.Default
+    @JsonProperty("charging_type")
+    private ChargingType chargingType = ChargingType.IEC;
+
+    @Builder.Default
+    @JsonProperty("destination_charging")
+    private boolean destinationCharging = false;
+
+    @Builder.Default
+    @JsonProperty("plmn_lookup_enabled")
+    private boolean plmnLookupEnabled = false;
+
+    @Builder.Default
+    @JsonProperty("sri_for_charging")
+    private boolean sriForCharging = false;
+
+    @JsonProperty("mcc_mnc_charging")
+    private String mccMncCharging;
+
+    @JsonProperty("mcc_mnc_destination")
+    private String mccMncDestination;
 
     @Builder.Default
     @JsonProperty("use_proxy")
@@ -360,9 +429,17 @@ public class MessageEvent {
     @JsonProperty("sip_message_supported")
     private boolean sipMessageSupported;
 
+    @JsonProperty("http2_message_supported")
+    private boolean http2MessageSupported;
+
+    private static String normalizeShortMessage(String value) {
+        return Objects.isNull(value) ? null : value.trim();
+    }
+
     /**
      * @deprecated
      */
+    @SuppressWarnings("java:S1133")
     @Deprecated(forRemoval = true)
     public UtilsRecords.Cdr toCdr(
             UtilsEnum.Module module, UtilsEnum.MessageType messageType, UtilsEnum.CdrStatus cdrStatus) {
@@ -372,6 +449,7 @@ public class MessageEvent {
     /**
      * @deprecated
      */
+    @SuppressWarnings("java:S1133")
     @Deprecated(forRemoval = true)
     public UtilsRecords.Cdr toCdr(
             UtilsEnum.Module module,
@@ -402,20 +480,7 @@ public class MessageEvent {
             String commentOverride) {
 
         long deliveryDate = System.currentTimeMillis();
-        String comment = commentOverride;
-
-        if (Objects.isNull(comment)) {
-            comment = "";
-            if (UtilsEnum.MessageType.DELIVER.equals(messageType)) {
-                comment = Objects.nonNull(this.status) ? this.status : "";
-            }
-            if (UtilsEnum.CdrStatus.FAILED.equals(cdrStatus)) {
-                Integer subError = Objects.nonNull(this.customParams) ?
-                        (Integer) this.customParams.getOrDefault(ErrorCodes.SUB_ERROR_KEY, null) :
-                        null;
-                comment = ErrorCodes.getErrorDescription(module, this.errorCode, subError);
-            }
-        }
+        String comment = resolveCdrComment(module, messageType, cdrStatus, commentOverride);
 
         long generationDate = System.currentTimeMillis();
         long submitDate = parseSubmitDate(this.id);
@@ -472,15 +537,31 @@ public class MessageEvent {
                 defaultIfNull(this.totalSegment),
                 defaultIfNull(this.segmentSequence),
                 defaultIfNull(this.retryNumber),
+                defaultIfNull(Objects.nonNull(this.profileId) && this.profileId > 0 ? this.profileId : null),
                 defaultIfNull(this.parentId),
                 (Objects.isNull(this.broadcastId) ? 0 : this.broadcastId),
                 defaultIfNull(this.localTranslationType),
                 defaultIfNull(this.remoteTranslationType),
                 defaultIfNull(this.smscMessagePriority),
                 defaultIfNull(Objects.nonNull(this.optionalParameters) ? Converter.valueAsString(this.optionalParameters.stream()
-                        .filter(obj -> obj.tag() != OptionalParameter.Tag.MESSAGE_PAYLOAD.code()).toList()) : null)
-
+                        .filter(obj -> obj.tag() != OptionalParameter.Tag.MESSAGE_PAYLOAD.code()).toList()) : null),
+                defaultIfNull(this.source),
+                defaultIfNull(this.destination),
+                defaultIfNull(this.mccMncDestination)
         );
+    }
+
+    private String resolveCdrComment(UtilsEnum.Module module, UtilsEnum.MessageType messageType, UtilsEnum.CdrStatus cdrStatus, String commentOverride) {
+        if (Objects.nonNull(commentOverride)) return commentOverride;
+
+        if (UtilsEnum.CdrStatus.FAILED.equals(cdrStatus)) {
+            Integer subError = Objects.nonNull(this.customParams) ? (Integer) this.customParams.getOrDefault(ErrorCodes.SUB_ERROR_KEY, null) : null;
+            return ErrorCodes.getErrorDescription(module, this.errorCode, subError);
+        }
+
+        if (UtilsEnum.MessageType.DELIVER.equals(messageType)) return Objects.nonNull(this.status) ? this.status : "";
+
+        return "";
     }
 
     private String defaultIfNull(Object value) {
@@ -523,8 +604,9 @@ public class MessageEvent {
         MessageEvent deliveryReceiptMessageEvent;
         DeliveryReceiptState deliveryReceiptState = DeliveryReceiptState.DELIVRD;
         int error = 0;
-        String currentMessageId = ("HTTP".equalsIgnoreCase(this.getOriginProtocol()) && (Objects.nonNull(this.getMessageParts()) && !this.getMessageParts().isEmpty())) ?
-                this.getParentId() : this.getMessageId();
+
+        boolean useHttpParentId = ("HTTP".equalsIgnoreCase(this.getOriginProtocol()) && (Objects.nonNull(this.getMessageParts()) && !this.getMessageParts().isEmpty()));
+        String currentMessageId = (useHttpParentId || this.splitForSmsc) ? this.getParentId() : this.getMessageId();
 
         DeliveryReceipt deliveryReceipt = new DeliveryReceipt(currentMessageId, 1, 1,
                 new Date(), new Date(), deliveryReceiptState, "000", "");
@@ -545,6 +627,7 @@ public class MessageEvent {
 
         String dlrMessage = Objects.isNull(extraInformation) ? deliveryReceipt.toString() : deliveryReceipt.toString().concat(extraInformation);
         deliveryReceiptMessageEvent.setId(System.currentTimeMillis() + "-" + System.nanoTime());
+        deliveryReceiptMessageEvent.setMessageId(currentMessageId);
         deliveryReceiptMessageEvent.setRegisteredDelivery(0);
         deliveryReceiptMessageEvent.setDeliverSmId(this.getMessageId());
         deliveryReceiptMessageEvent.setDlr(true);
@@ -564,9 +647,11 @@ public class MessageEvent {
         deliveryReceiptMessageEvent.setSourceAddrTon(this.getDestAddrTon());
         deliveryReceiptMessageEvent.setSourceAddrNpi(this.getDestAddrNpi());
         deliveryReceiptMessageEvent.setSourceAddr(this.getDestinationAddr());
+        deliveryReceiptMessageEvent.setSource(this.getDestination());
         deliveryReceiptMessageEvent.setDestAddrTon(this.getSourceAddrTon());
         deliveryReceiptMessageEvent.setDestAddrNpi(this.getSourceAddrNpi());
         deliveryReceiptMessageEvent.setDestinationAddr(this.getSourceAddr());
+        deliveryReceiptMessageEvent.setDestination(this.getSource());
         deliveryReceiptMessageEvent.setCheckSubmitSmResponse(false);
         deliveryReceiptMessageEvent.setEsmClass((int) deliverEsmClass.value());
         deliveryReceiptMessageEvent.setMsisdn(deliveryReceiptMessageEvent.getDestinationAddr());
@@ -584,6 +669,10 @@ public class MessageEvent {
                 new UtilsRecords.OptionalParameter("0x0423", EncodingUtils.bytesToHex(SmppUtils.getNetworkErrorCode(error))),
                 new UtilsRecords.OptionalParameter("0x0427", (deliveryReceiptState.value() + 1) + ""));
         deliveryReceiptMessageEvent.setOptionalParameters(dlrTLVs);
+        if (GeneralSmscConstants.SIP_PROTOCOL.equalsIgnoreCase(this.originProtocol)) {
+            Object messageReference = this.getFromCustomParam(GeneralSmscConstants.SIP_MESSAGE_REFERENCE, 0);
+            deliveryReceiptMessageEvent.addCustomParam(GeneralSmscConstants.SIP_MESSAGE_REFERENCE, messageReference);
+        }
         log.debug("new deliveryReceipt message event: {}", deliveryReceiptMessageEvent);
         return deliveryReceiptMessageEvent;
     }
@@ -598,6 +687,31 @@ public class MessageEvent {
         this.getCustomParams().put(key, value);
     }
 
+    public void addCustomParam(Map<String, Object> customParameters) {
+        try {
+            if (Objects.isNull(customParameters)) {
+                return;
+            }
+            for (Map.Entry<String, Object> entry : customParameters.entrySet()) {
+                Object value = entry.getValue();
+                if (value == null) {
+                    continue;
+                }
+                switch (value) {
+                    case String str when str.isEmpty() -> {
+                        // not entry empty value
+                    }
+                    case Integer i when i == -1 -> {
+                        // not entry -1 value
+                    }
+                    default -> this.addCustomParam(entry.getKey(), value);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error adding Map custom params -> {}", e.getMessage(), e);
+        }
+    }
+
     public void addHost(String value) {
         this.addCustomParam("host", value);
     }
@@ -607,6 +721,18 @@ public class MessageEvent {
             return defaultValue;
         }
         return this.getCustomParams().getOrDefault(key, defaultValue);
+    }
+
+    /**
+     * @return
+     */
+    @JsonIgnore
+    public List<MessagePart> getPendingMessageParts() {
+        if (Objects.isNull(this.messageParts)) {
+            return List.of();
+        }
+
+        return this.messageParts.stream().filter(part -> !part.isSent()).toList();
     }
 
     public boolean isFinalSegmentForSplitSmsc() {

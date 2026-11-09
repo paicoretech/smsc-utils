@@ -39,7 +39,7 @@ public class KafkaConsumerConstants {
     public static final String DIAMETER_HIGH_CHARGING_GROUP_ID = "smsc.diameter.high.charging";
     public static final String DIAMETER_MEDIUM_CHARGING_GROUP_ID = "smsc.diameter.medium.charging";
     public static final String DIAMETER_LOW_CHARGING_GROUP_ID = "smsc.diameter.low.charging";
-
+    public static final String DIAMETER_CHARGING_COMPLETION_GROUP_ID = "smsc.diameter.charging.completion";
 
     public static final String HTTP_PROXY_GROUP_ID_PREFIX = "smsc.http.proxy.message";
     public static final String BACKEND_API_GROUP_ID_PREFIX = "smsc.backend.api";
@@ -47,4 +47,15 @@ public class KafkaConsumerConstants {
     public static final String SIP_HIGH_MESSAGE_GROUP_ID_PREFIX = "smsc.sip.high.message.";
     public static final String SIP_MEDIUM_MESSAGE_GROUP_ID_PREFIX = "smsc.sip.medium.message.";
     public static final String SIP_LOW_MESSAGE_GROUP_ID_PREFIX = "smsc.sip.low.message.";
+
+    // USSI consumer constants
+    public static final String SIP_ACK_MESSAGE_GROUP_ID_PREFIX = "smsc.sip.ack.message.";
+    public static final String SIP_USSI_MESSAGE_GROUP_ID_PREFIX = "smsc.sip.ussi.message.";
+
+    public static final String SMSF_HIGH_MESSAGE_GROUP_ID_PREFIX = "smsc.smsf.high.message.";
+    public static final String SMSF_MEDIUM_MESSAGE_GROUP_ID_PREFIX = "smsc.smsf.medium.message.";
+    public static final String SMSF_LOW_MESSAGE_GROUP_ID_PREFIX = "smsc.smsf.low.message.";
+
+    public static final String SMSF_UDM_REGISTER_GROUP_ID_PREFIX = "smsc.smsf.udm.register.";
+
 }

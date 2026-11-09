@@ -7,6 +7,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class KafkaTopicsConstants {
     public static final String CDR_TOPIC = "cdr";
+    public static final String CDR_USSI_TOPIC = "cdr.ussi";
+
     public static final String BROADCAST_STATISTIC_TOPIC = "broadcast.statistic";
 
     public static final String PRE_MESSAGE_HIGH_TOPIC = "pre.message.high";
@@ -34,10 +36,16 @@ public class KafkaTopicsConstants {
     public static final String CHARGING_HIGH_MESSAGE_TOPIC = "charging.sms.high";
     public static final String CHARGING_MEDIUM_MESSAGE_TOPIC = "charging.sms.medium";
     public static final String CHARGING_LOW_MESSAGE_TOPIC = "charging.sms.low";
+    public static final String CHARGING_COMPLETION_TOPIC = "charging.completion";
 
     public static final String SIP_HIGH_MESSAGE_TOPIC_SUFFIX = ".sip.sms.high";
     public static final String SIP_MEDIUM_MESSAGE_TOPIC_SUFFIX = ".sip.sms.medium";
     public static final String SIP_LOW_MESSAGE_TOPIC_SUFFIX = ".sip.sms.low";
+
+    public static final String SMSF_HIGH_MESSAGE_TOPIC_SUFFIX = ".smsf.sms.high";
+    public static final String SMSF_MEDIUM_MESSAGE_TOPIC_SUFFIX = ".smsf.sms.medium";
+    public static final String SMSF_LOW_MESSAGE_TOPIC_SUFFIX = ".smsf.sms.low";
+    public static final String SMSF_UDM_REGISTER_TOPIC_SUFFIX = ".smsf.udm.register";
 
     public static final String RETRIES_HIGH_TOPIC = "retries.sms.high";
     public static final String RETRIES_MEDIUM_TOPIC = "retries.sms.medium";
@@ -50,4 +58,10 @@ public class KafkaTopicsConstants {
     public static final String SS7_HSS_REGISTER_TOPIC_SUFFIX = ".ss7.hss.register";
     public static final String DIAMETER_HSS_REGISTER_TOPIC_SUFFIX = ".diameter.hss.register";
     public static final String SMPP_BIND_EVENTS_TOPIC = "smpp.bind.events";
+
+
+    public static final String USSI_SS7_MESSAGE_TOPIC_SUFFIX = ".ss7.ussi.message";
+    public static final String USSI_SIP_MESSAGE_TOPIC_SUFFIX = ".sip.ussi.message";
+    public static final String USSI_SIP_ACK_MESSAGE_TOPIC_SUFFIX = ".sip.ack.ussi.message";
+
 }

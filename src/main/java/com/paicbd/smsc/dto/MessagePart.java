@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -45,4 +46,13 @@ public class MessagePart {
 
     @JsonProperty("optional_parameters")
     private List<UtilsRecords.OptionalParameter> optionalParameters;
+
+    @JsonProperty("custom_parameters")
+    private Map<String, Object> customParams;
+
+    @JsonProperty("sent")
+    private boolean sent;
+
+    @JsonProperty("reserved_unit")
+    private boolean reservedUnit;
 }

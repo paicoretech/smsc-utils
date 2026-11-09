@@ -9,7 +9,8 @@ public enum RegEventState {
     PENDING(0),
     ACTIVE(1),
     FAILED(2),
-    EXPIRED(3);
+    EXPIRED(3),
+    INACTIVE(4);
 
     private final int code;
 

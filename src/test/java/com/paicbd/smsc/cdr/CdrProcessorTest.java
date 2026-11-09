@@ -63,6 +63,28 @@ class CdrProcessorTest {
         verifyNoMoreInteractions(kafkaTemplate);
     }
 
+    @Test
+    @DisplayName("toCdr maps source and destination and serializes them with the new field names")
+    void toCdrShouldMapSourceAndDestination() {
+        MessageEvent event = baseMessageEvent();
+        event.setSource("imsi-748010000000001");
+        event.setDestination("imsi-748010000000002");
+
+        UtilsRecords.Cdr cdr = event.toCdr(
+                UtilsEnum.Module.HTTP2_CLIENT,
+                UtilsEnum.MessageType.MESSAGE,
+                UtilsEnum.CdrStatus.SUCCESS,
+                "",
+                null);
+
+        assertEquals("imsi-748010000000001", cdr.source());
+        assertEquals("imsi-748010000000002", cdr.destination());
+
+        String json = Converter.valueAsString(cdr);
+        assertTrue(json.contains("\"source\":\"imsi-748010000000001\""));
+        assertTrue(json.contains("\"destination\":\"imsi-748010000000002\""));
+    }
+
 
     @Test
     @DisplayName("toCdr should create Cdr with correct comment when messageType is DELIVER and status is not null")
@@ -162,6 +184,45 @@ class CdrProcessorTest {
 
         assertNotNull(cdr);
         assertEquals("", cdr.optionalParameters());
+    }
+
+    @Test
+    @DisplayName("toCdr should expose Retry Profile id when available")
+    void toCdrShouldExposeRetryProfileIdWhenAvailable() {
+        MessageEvent event = baseMessageEvent();
+        event.setProfileId(18);
+
+        UtilsRecords.Cdr cdr = event.toCdr(
+                UtilsEnum.Module.SMPP_CLIENT,
+                UtilsEnum.MessageType.MESSAGE,
+                UtilsEnum.CdrStatus.SUCCESS,
+                "",
+                null
+        );
+
+        assertEquals("18", cdr.profileId());
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidProfileIds")
+    @DisplayName("toCdr should expose empty Retry Profile id when Profile id is not valid")
+    void toCdrShouldExposeEmptyRetryProfileIdWhenProfileIdIsNotValid(Integer profileId) {
+        MessageEvent event = baseMessageEvent();
+        event.setProfileId(profileId);
+
+        UtilsRecords.Cdr cdr = event.toCdr(
+                UtilsEnum.Module.SMPP_CLIENT,
+                UtilsEnum.MessageType.MESSAGE,
+                UtilsEnum.CdrStatus.SUCCESS,
+                "",
+                null
+        );
+
+        assertEquals("", cdr.profileId());
+    }
+
+    private static Stream<Arguments> invalidProfileIds() {
+        return Stream.of(Arguments.of((Integer) null), Arguments.of(0), Arguments.of(-1));
     }
 
     private MessageEvent baseMessageEvent() {

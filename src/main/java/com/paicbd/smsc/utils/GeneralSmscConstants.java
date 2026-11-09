@@ -28,6 +28,7 @@ public class GeneralSmscConstants {
     public static final String HTTP_PROTOCOL = "HTTP";
     public static final String SMPP_PROTOCOL = "SMPP";
     public static final String SIP_PROTOCOL = "SIP";
+    public static final String HTTP2_PROTOCOL = "HTTP2";
     public static final String SMSC_DATETIME_FORMATTER = "yyyy-MM-dd HH:mm:ss";
 
     public static final String MESSAGE_PRIORITY = "message_priority"; // Use for Custom Param in SubmitResult
@@ -55,15 +56,20 @@ public class GeneralSmscConstants {
     public static final String SCCP_DESTINATION_ADDRESS_MT = "sccp_destination_address_mt";
     public static final String CUSTOM_MAP_LAYER_SOURCE_ADDRESS_SRI = "custom_map_layer_source_address_sri";
     public static final String CUSTOM_MAP_LAYER_SOURCE_ADDRESS_MT = "custom_map_layer_source_address_mt";
+    public static final String CUSTOM_MAP_LAYER_SERVICE_CENTRE_ADDRESS_OA = "custom_map_layer_service_centre_address_oa";
     public static final String PRIORITY_FLAG_SRI = "priority_flag_sri";
     public static final String APPLICATION_CONTEXT_MT = "application_context_mt";
 
     // Sip
-    public static final String SIP_SETTINGS_HASH_NAME = "sip_settings";
+    public static final String SIP_GATEWAYS_HASH_NAME = "sip_gateways";
     public static final String SIP_DESTINATION_URI = "SIP_DESTINATION_URI";
+    public static final String SIP_MESSAGE_REFERENCE = "SIP_MESSAGE_REFERENCES";
 
     // Multipart message reference type propagated via customParams
     public static final String MSG_REFERENCE_TYPE = "msgReferenceType";
     public static final String MSG_REFERENCE_TYPE_8BIT = "8BIT";
     public static final String MSG_REFERENCE_TYPE_16BIT = "16BIT";
+
+    //http2
+    public static final String HTTP2_GATEWAYS_HASH_NAME = "http2_gateways";
 }

@@ -717,12 +717,10 @@ class PayloadInterpreterTest {
         PayloadInterpreter.convertShortMessageByEncodingType(resultedMessageEvent, getGateway());
         if (!"0x05".equalsIgnoreCase(dataCodingHex)) {
             assertEquals("Hello world!", resultedMessageEvent.getShortMessage());
-        } else if (Objects.nonNull(resultedMessageEvent.getShortMessage())) {
+        } else if (Objects.nonNull(resultedMessageEvent.getShortMessage()) && !messageHex.isBlank()) {
             //assertEquals(messageHex, resultedMessageEvent.getShortMessage())
-            if (!messageHex.isBlank()) {
-                assertNotNull(resultedMessageEvent.getUdhRaw());
-                assertTrue(resultedMessageEvent.getUdhLength() > 0);
-            }
+            assertNotNull(resultedMessageEvent.getUdhRaw());
+            assertTrue(resultedMessageEvent.getUdhLength() > 0);
         }
 
         if (Objects.isNull(resultedMessageEvent.getShortMessage()) || resultedMessageEvent.getShortMessage().isBlank()) {

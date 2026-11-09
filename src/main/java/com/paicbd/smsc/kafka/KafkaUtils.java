@@ -53,6 +53,13 @@ public class KafkaUtils {
         map.put(GeneralSmscConstants.SIP_PROTOCOL + "-" + GeneralSmscConstants.LOW_PRIORITY,
                 e -> e.getDestNetworkId() + KafkaTopicsConstants.SIP_LOW_MESSAGE_TOPIC_SUFFIX);
 
+        map.put(GeneralSmscConstants.HTTP2_PROTOCOL + "-" + GeneralSmscConstants.HIGH_PRIORITY,
+                e -> e.getDestNetworkId() + KafkaTopicsConstants.SMSF_HIGH_MESSAGE_TOPIC_SUFFIX);
+        map.put(GeneralSmscConstants.HTTP2_PROTOCOL + "-" + GeneralSmscConstants.MEDIUM_PRIORITY,
+                e -> e.getDestNetworkId() + KafkaTopicsConstants.SMSF_MEDIUM_MESSAGE_TOPIC_SUFFIX);
+        map.put(GeneralSmscConstants.HTTP2_PROTOCOL + "-" + GeneralSmscConstants.LOW_PRIORITY,
+                e -> e.getDestNetworkId() + KafkaTopicsConstants.SMSF_LOW_MESSAGE_TOPIC_SUFFIX);
+
         smsDestinationTopics = Map.copyOf(map);
     }
 
@@ -87,6 +94,14 @@ public class KafkaUtils {
         Function<MessageEvent, String> topicResolver = smsDestinationTopics.get(messageEvent.getDestProtocol() + "-" + messageEvent.getSmscMessagePriority());
         Objects.requireNonNull(topicResolver, "SMS destination topic not found for protocol: " + messageEvent.getDestProtocol());
         return topicResolver.apply(messageEvent);
+    }
+
+    public static String getSs7ChargingDestinationTopic(int networkId, String messagePriority) {
+        return switch (messagePriority) {
+            case GeneralSmscConstants.HIGH_PRIORITY -> networkId + KafkaTopicsConstants.SS7_HIGH_MESSAGE_TOPIC_SUFFIX;
+            case GeneralSmscConstants.LOW_PRIORITY -> networkId + KafkaTopicsConstants.SS7_LOW_MESSAGE_TOPIC_SUFFIX;
+            default -> networkId + KafkaTopicsConstants.SS7_MEDIUM_MESSAGE_TOPIC_SUFFIX;
+        };
     }
 
     public static String getDeliveryDestinationTopic(MessageEvent messageEvent) {

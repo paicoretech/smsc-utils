@@ -83,3 +83,30 @@ CREATE TABLE IF NOT EXISTS smsc.sip_registration_state (
 );
 
 CREATE INDEX sip_reg_aor_idx ON sip_registration_state (aor);
+
+CREATE TABLE IF NOT EXISTS sip_submit_sm_result (
+   id TEXT PRIMARY KEY,
+   data TEXT
+);
+
+CREATE TABLE IF NOT EXISTS smsf_ue_sms_context (
+    supi text PRIMARY KEY,
+    gpsi text,
+    data text,
+    reg_event_state text,
+    updated_at timestamp
+);
+
+CREATE INDEX IF NOT EXISTS smsf_ue_sms_context_gpsi_idx
+    ON smsf_ue_sms_context (gpsi);
+
+CREATE TABLE IF NOT EXISTS smsf_submit_sm_result (
+    id TEXT PRIMARY KEY,
+    data TEXT
+);
+
+CREATE TABLE IF NOT EXISTS smsf_message_parts (
+                                                  id TEXT PRIMARY KEY,
+                                                  timestamp timestamp,
+                                                  data TEXT
+);

@@ -60,6 +60,7 @@
         <spring.kafka.version>3.3.7</spring.kafka.version>
         <jackson.version>2.18.1</jackson.version>
         <bucket4j.version>8.1.0</bucket4j.version>
+        <sba-stack.version>1.0.0-OPEN-1</sba-stack.version>
     </properties>
     <distributionManagement>
         <repository>
@@ -125,6 +126,11 @@
             <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-core</artifactId>
             <version>${apache.cassandra.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paicore.sba.stack</groupId>
+            <artifactId>sba-stack-core</artifactId>
+            <version>${sba-stack.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>

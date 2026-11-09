@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.paicbd.smsc.utils.UtilsEnum.Module.DIAMETER;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.HTTP_CLIENT;
+import static com.paicbd.smsc.utils.UtilsEnum.Module.HTTP2_CLIENT;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.HTTP_SERVER;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.ORCHESTRATOR;
 import static com.paicbd.smsc.utils.UtilsEnum.Module.RETRIES;
@@ -121,6 +122,7 @@ class UtilsEnumTest {
                 SMPP_CLIENT,
                 HTTP_SERVER,
                 HTTP_CLIENT,
+                HTTP2_CLIENT,
                 SS7_CLIENT,
                 ROUTING,
                 ORCHESTRATOR,
@@ -141,7 +143,8 @@ class UtilsEnumTest {
                 UtilsEnum.MessageType.SS7API_MT,
                 UtilsEnum.MessageType.SS7API_MESSAGE,
                 UtilsEnum.MessageType.HR_SRI,
-                UtilsEnum.MessageType.HR_MESSAGE
+                UtilsEnum.MessageType.HR_MESSAGE,
+                UtilsEnum.MessageType.USSI_MESSAGE
         };
 
         assertArrayEquals(expectedValues, UtilsEnum.MessageType.values());

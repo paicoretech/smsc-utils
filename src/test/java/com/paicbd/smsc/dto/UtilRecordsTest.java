@@ -25,7 +25,10 @@ class UtilRecordsTest {
                 2,
                 false,
                 null,
-                false
+                false,
+                null,
+                null,
+                null
         );
         Assertions.assertTrue(submitSmResponseEvent.isFinalSegmentForSplitSmsc());
 
@@ -46,7 +49,10 @@ class UtilRecordsTest {
                 2,
                 false,
                 null,
-                true
+                true,
+                null,
+                null,
+                null
         );
         Assertions.assertTrue(submitSmResponseEvent2.isFinalSegmentForSplitSmsc());
 
@@ -66,7 +72,10 @@ class UtilRecordsTest {
                 2,
                 false,
                 null,
-                true
+                true,
+                null,
+                null,
+                null
         );
         Assertions.assertFalse(submitSmResponseEvent3.isFinalSegmentForSplitSmsc());
 
@@ -87,7 +96,10 @@ class UtilRecordsTest {
                 3,
                 false,
                 null,
-                true
+                true,
+                null,
+                null,
+                null
         );
         Assertions.assertTrue(submitSmResponseEvent4.isFinalSegmentForSplitSmsc());
     }

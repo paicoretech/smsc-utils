@@ -29,4 +29,11 @@ public class ScyllaTablesConstants {
     public static final String HOME_ROUTING_CORRELATION_VALUE_TABLE = "home_routing_correlation_value";
     public static final String PENDING_MESSAGES_TABLE = "pending_messages";
     public static final String SIP_REGISTRATION_STATE_TABLE = "sip_registration_state";
+    public static final String BEARER_TOKEN_BLACKLIST_TABLE = "bearer_token_blacklist";
+    public static final String SIP_SUBMIT_SM_RESULT_TABLE = "sip_submit_sm_result";
+    public static final String PLMN_PREFIX_TABLE = "plmn_prefix";
+    public static final String PLMN_RANGE_TABLE = "plmn_range";
+    public static final String SMSF_UE_SMS_CONTEXT_TABLE = "smsf_ue_sms_context";
+    public static final String SMSF_SUBMIT_SM_RESULT_TABLE = "smsf_submit_sm_result";
+    public static final String SMSF_MESSAGE_PARTS_TABLE = "smsf_message_parts";
 }

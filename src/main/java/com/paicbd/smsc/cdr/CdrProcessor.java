@@ -1,6 +1,7 @@
 package com.paicbd.smsc.cdr;
 
 import com.paicbd.smsc.dto.MessageEvent;
+import com.paicbd.smsc.dto.UssiMessageEvent;
 import com.paicbd.smsc.dto.UtilsRecords;
 import com.paicbd.smsc.kafka.KafkaTopicsConstants;
 import com.paicbd.smsc.utils.BroadcastMessageStatus;
@@ -37,6 +38,13 @@ public class CdrProcessor {
         UtilsRecords.Cdr cdr = event.toCdr(module, messageType, status, mnoMessageId, comment);
         sendBroadcastStatistics(cdr, kafkaTemplate);
         kafkaTemplate.send(KafkaTopicsConstants.CDR_TOPIC, cdr.toString());
+    }
+
+    public void publishUssiCdr(
+            @NonNull UssiMessageEvent event, UtilsEnum.Module module,
+            UtilsEnum.CdrStatus status, KafkaTemplate<String, String> kafkaTemplate) {
+        UtilsRecords.CdrUssi cdr = event.toCdr(module, status);
+        kafkaTemplate.send(KafkaTopicsConstants.CDR_USSI_TOPIC, cdr.toString());
     }
 
     private void sendBroadcastStatistics(UtilsRecords.Cdr cdr, KafkaTemplate<String, String> kafkaTemplate) {

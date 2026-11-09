@@ -58,6 +58,19 @@ public class Ss7Settings {
     @JsonProperty("map_version")
     private int mapVersion;
 
+    @Builder.Default
+    @JsonProperty("report_sm_delivery_status")
+    private boolean reportSmDeliveryStatus = true;
+
+    @JsonProperty("auto_retry_error_code")
+    private String autoRetryErrorCode;
+
+    @JsonProperty("no_retry_error_code")
+    private String noRetryErrorCode;
+
+    @JsonProperty("retry_alternate_destination_error_code")
+    private String retryAlternateDestinationErrorCode;
+
     @JsonProperty("split_message")
     private boolean splitMessage;
 
@@ -76,9 +89,12 @@ public class Ss7Settings {
     @JsonProperty("allowed_ussi")
     private boolean allowedUssi;
 
+    @JsonProperty("sip_network_id")
+    private Integer sipNetworkId;
+
+
     @Override
     public String toString() {
         return Converter.valueAsString(this);
     }
 }
-

@@ -4,19 +4,27 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.paicbd.smsc.dto.GeneralSettings;
 import com.paicbd.smsc.dto.RoutingRule;
 import com.paicbd.smsc.dto.UtilsRecords;
+import com.paicbd.smsc.dto.diameter.DiameterConfig;
 import com.paicbd.smsc.exception.RTException;
 import org.jsmpp.bean.OptionalParameter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.ServerSocket;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import redis.clients.jedis.JedisCluster;
+
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,6 +35,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConverterTest {
+
+    /**
+     * A node where no Redis cluster can answer. The port is reserved and released at class initialization instead
+     * of being hardcoded, so the tests below do not depend on which services the machine happens to be running.
+     */
+    private static final List<String> NODE_WITHOUT_CLUSTER = List.of("localhost:" + reserveUnusedPort());
+
+    private static int reserveUnusedPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not reserve a port with no listener for the test", e);
+        }
+    }
 
     @Test
     void testConstantsPrivateConstructor() throws NoSuchMethodException {
@@ -111,6 +133,43 @@ class ConverterTest {
     }
 
     @Test
+    void testDiameterConfigRetryErrorCodesSerialization() {
+        DiameterConfig config = DiameterConfig.builder()
+                .autoRetryErrorCode("3001,3002")
+                .noRetryErrorCode("5001,5002")
+                .retryAlternateDestinationErrorCode("4001,4002")
+                .build();
+
+        String json = Converter.valueAsString(config);
+
+        assertTrue(json.contains("\"auto_retry_error_code\":\"3001,3002\""));
+        assertTrue(json.contains("\"no_retry_error_code\":\"5001,5002\""));
+        assertTrue(json.contains("\"retry_alternate_destination_error_code\":\"4001,4002\""));
+
+        DiameterConfig parsed = Converter.stringToObject(json, DiameterConfig.class);
+
+        assertNotNull(parsed);
+        assertEquals("3001,3002", parsed.getAutoRetryErrorCode());
+        assertEquals("5001,5002", parsed.getNoRetryErrorCode());
+        assertEquals("4001,4002", parsed.getRetryAlternateDestinationErrorCode());
+    }
+
+    @Test
+    void testDiameterConfigWithoutRetryErrorCodesDeserialization() {
+        String json = "{\"id\":1,\"name\":\"diameter-ocs\",\"enabled\":true}";
+
+        DiameterConfig parsed = Converter.stringToObject(json, DiameterConfig.class);
+
+        assertNotNull(parsed);
+        assertEquals(1, parsed.getId());
+        assertEquals("diameter-ocs", parsed.getName());
+        assertTrue(parsed.isEnabled());
+        assertNull(parsed.getAutoRetryErrorCode());
+        assertNull(parsed.getNoRetryErrorCode());
+        assertNull(parsed.getRetryAlternateDestinationErrorCode());
+    }
+
+    @Test
     void testSecondsToRelativeValidityPeriod() {
         assertEquals("000000000010000R", Converter.secondsToRelativeValidityPeriod(10)); // 10 seconds
         assertEquals("000000020000000R", Converter.secondsToRelativeValidityPeriod(7200)); // 2 hours
@@ -177,6 +236,123 @@ class ConverterTest {
         assertNull(map);
     }
 
+    @Test
+    void paramsToRedisManager_standaloneNoAuth_returnsRedisManager() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                List.of("localhost:6379"), 10, 10, 1, true,
+                2000, 2000, 5, "", "", true);
+        RedisManager result = Converter.paramsToRedisManager(params);
+        assertNotNull(result);
+        result.close();
+    }
+
+    @Test
+    void paramsToRedisManager_standaloneWithPassword_returnsRedisManager() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                List.of("localhost:6379"), 10, 10, 1, true,
+                2000, 2000, 5, "", "secret", true);
+        RedisManager result = Converter.paramsToRedisManager(params);
+        assertNotNull(result);
+        result.close();
+    }
+
+    @Test
+    void paramsToRedisManager_standaloneWithUserAndPassword_returnsRedisManager() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                List.of("localhost:6379"), 10, 10, 1, true,
+                2000, 2000, 5, "user", "secret", true);
+        RedisManager result = Converter.paramsToRedisManager(params);
+        assertNotNull(result);
+        result.close();
+    }
+
+    @Test
+    void paramsToRedisManager_standaloneDefaultTimeouts_returnsRedisManager() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                List.of("localhost:6379"), 10, 10, 1, true,
+                0, 0, 0, "", "", true);
+        RedisManager result = Converter.paramsToRedisManager(params);
+        assertNotNull(result);
+        result.close();
+    }
+
+    @Test
+    void paramsToRedisManager_clusterMode_returnsNullWhenNoCluster() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                NODE_WITHOUT_CLUSTER, 10, 10, 1, true,
+                2000, 2000, 5, "", "", false);
+
+        try (var converterMock = mockStatic(Converter.class, CALLS_REAL_METHODS)) {
+            converterMock.when(() -> Converter.paramsToJedisCluster(params)).thenReturn(null);
+
+            RedisManager result = Converter.paramsToRedisManager(params);
+
+            assertNull(result);
+        }
+    }
+
+    @Test
+    void paramsToRedisManager_clusterWithPassword_returnsNullWhenNoCluster() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                NODE_WITHOUT_CLUSTER, 10, 10, 1, true,
+                2000, 2000, 5, "", "secret", false);
+
+        try (var converterMock = mockStatic(Converter.class, CALLS_REAL_METHODS)) {
+            converterMock.when(() -> Converter.paramsToJedisCluster(params)).thenReturn(null);
+
+            RedisManager result = Converter.paramsToRedisManager(params);
+
+            assertNull(result);
+        }
+    }
+
+    @Test
+    void paramsToRedisManager_clusterWithUserAndPassword_returnsNullWhenNoCluster() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                NODE_WITHOUT_CLUSTER, 10, 10, 1, true,
+                2000, 2000, 5, "user", "secret", false);
+
+        try (var converterMock = mockStatic(Converter.class, CALLS_REAL_METHODS)) {
+            converterMock.when(() -> Converter.paramsToJedisCluster(params)).thenReturn(null);
+
+            RedisManager result = Converter.paramsToRedisManager(params);
+
+            assertNull(result);
+        }
+    }
+
+    @Test
+    void paramsToRedisManager_clusterDefaultTimeouts_returnsNullWhenNoCluster() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                NODE_WITHOUT_CLUSTER, 10, 10, 1, true,
+                0, 0, 0, "", "", false);
+
+        try (var converterMock = mockStatic(Converter.class, CALLS_REAL_METHODS)) {
+            converterMock.when(() -> Converter.paramsToJedisCluster(params)).thenReturn(null);
+
+            RedisManager result = Converter.paramsToRedisManager(params);
+
+            assertNull(result);
+        }
+    }
+
+    @Test
+    void paramsToRedisManager_clusterMode_returnsRedisManagerWhenClusterExists() {
+        UtilsRecords.JedisConfigParams params = new UtilsRecords.JedisConfigParams(
+                List.of("localhost:7000"), 10, 10, 1, true,
+                2000, 2000, 5, "", "", false);
+        JedisCluster jedisCluster = mock(JedisCluster.class);
+
+        try (var converterMock = mockStatic(Converter.class, CALLS_REAL_METHODS)) {
+            converterMock.when(() -> Converter.paramsToJedisCluster(params)).thenReturn(jedisCluster);
+
+            RedisManager result = Converter.paramsToRedisManager(params);
+
+            assertNotNull(result);
+            result.close();
+        }
+    }
+
     static Stream<UtilsRecords.JedisConfigParams> jedisConfigParamsStream() {
         return Stream.of(
                 new UtilsRecords.JedisConfigParams(
@@ -188,7 +364,7 @@ class ConverterTest {
                         0,
                         0,
                         0,
-                        "", ""),
+                        "", "", false),
                 new UtilsRecords.JedisConfigParams(
                         List.of("localhost:7000", "localhost:7001", "localhost:7002", "localhost:7003", "localhost:7004", "localhost:7005", "localhost:7006", "localhost:7007", "localhost:7008", "localhost:7009"),
                         1000,
@@ -198,7 +374,7 @@ class ConverterTest {
                         2000,
                         2000,
                         20,
-                        "", "pass"),
+                        "", "pass", false),
                 new UtilsRecords.JedisConfigParams(
                         List.of("localhost:7000", "localhost:7001", "localhost:7002", "localhost:7003", "localhost:7004", "localhost:7005", "localhost:7006", "localhost:7007", "localhost:7008", "localhost:7009"),
                         1000,
@@ -208,7 +384,7 @@ class ConverterTest {
                         2000,
                         2000,
                         20,
-                        "user", "pass")
+                        "user", "pass", false)
         );
     }
 

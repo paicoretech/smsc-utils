@@ -118,6 +118,7 @@ public class UtilsEnum {
         SMPP_CLIENT,
         HTTP_SERVER,
         HTTP_CLIENT,
+        HTTP2_CLIENT,
         SS7_CLIENT,
         ROUTING,
         ORCHESTRATOR,
@@ -133,7 +134,8 @@ public class UtilsEnum {
         SS7API_MT,
         SS7API_MESSAGE,
         HR_SRI,
-        HR_MESSAGE
+        HR_MESSAGE,
+        USSI_MESSAGE
     }
 
     public enum CdrStatus {

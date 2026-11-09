@@ -108,6 +108,10 @@ public class ServiceProvider {
     @JsonProperty("callback_url")
     private String callbackUrl;
 
+    @Builder.Default
+    @JsonProperty("http_dlr_health_check_enabled")
+    private Boolean httpDlrHealthCheckEnabled = false;
+
     @JsonProperty("authentication_types")
     private String authenticationTypes;
 
@@ -139,6 +143,21 @@ public class ServiceProvider {
 
     @JsonProperty("custom_parameters")
     private Map<String, String> customParameters;
+
+    @JsonProperty("security_authentication_type")
+    private String securityAuthenticationType;
+
+    @JsonProperty("basic_security_password")
+    private String basicSecurityPassword;
+
+    @JsonProperty("api_key_security_token")
+    private String apiKeySecurityToken;
+
+    @JsonProperty("proxy_mode")
+    private boolean proxyMode = false;
+
+    @JsonProperty("dlr_tlv_enabled")
+    private boolean dlrTlvEnabled = false;
 
     @Override
     public String toString() {

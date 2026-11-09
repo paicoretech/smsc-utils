@@ -66,7 +66,10 @@ public class UtilsRecords {
             @JsonProperty("dest_network_id") int destNetworkId,
             @JsonProperty("apply_for_refund") boolean applyForRefund,
             @JsonProperty("custom_parameters") Map<String, Object> customParams,
-            @JsonProperty("split_for_smsc") boolean splitForSmsc
+            @JsonProperty("split_for_smsc") boolean splitForSmsc,
+            @JsonProperty("source") String source,
+            @JsonProperty("destination") String destination,
+            @JsonProperty("smsc_message_priority") String smscMessagePriority
     ) {
 
         public boolean isFinalSegmentForSplitSmsc() {
@@ -91,7 +94,8 @@ public class UtilsRecords {
             int soTimeout,
             int maxAttempts,
             String user,
-            String password
+            String password,
+            boolean isStandaloneEnabled
     ) {
         @Override
         public String toString() {
@@ -149,12 +153,52 @@ public class UtilsRecords {
             @JsonProperty("total_segment") String totalSegment,
             @JsonProperty("segment_sequence") String segmentSequence,
             @JsonProperty("retry_number") String retryNumber,
+            @JsonProperty("profile_id") String profileId,
             @JsonProperty("parent_id") String parentId,
             @JsonProperty("broadcast_id") int broadcastId,
             @JsonProperty("local_translation_type") String localTranslationType,
             @JsonProperty("remote_translation_type") String remoteTranslationType,
             @JsonProperty("message_priority") String messagePriority,
-            @JsonProperty("optional_parameters") String optionalParameters
+            @JsonProperty("optional_parameters") String optionalParameters,
+            @JsonProperty("source") String source,
+            @JsonProperty("destination") String destination,
+            @JsonProperty("mcc_mnc_destination") String mccMncDestination
+    ) {
+        @Override
+        public String toString() {
+            return Converter.valueAsString(this);
+        }
+    }
+
+    public record CdrUssi(
+            @JsonProperty("record_date") String recordDate,
+            @JsonProperty("submit_date") String submitDate,
+            @JsonProperty("delivery_date") String deliveryDate,
+            @JsonProperty("id") String id,
+            @JsonProperty("origin_protocol") String originProtocol,
+            @JsonProperty("origin_network_id") String originNetworkId,
+            @JsonProperty("dest_protocol") String destProtocol,
+            @JsonProperty("dest_network_id") String destNetworkId,
+            @JsonProperty("status") String status,
+            @JsonProperty("comment") String comment,
+            @JsonProperty("dialog_duration") String dialogDuration,
+            @JsonProperty("processing_time") String processingTime,
+            @JsonProperty("data_coding") String dataCoding,
+            @JsonProperty("global_title") String globalTitle,
+            @JsonProperty("global_title_indicator") String globalTitleIndicator,
+            @JsonProperty("translation_type") String translationType,
+            @JsonProperty("short_code") String shortCode,
+            @JsonProperty("msisdn") String msisdn,
+            @JsonProperty("short_message") String shortMessage,
+            @JsonProperty("tcap_message_type") String tcapMessageType,
+            @JsonProperty("invoke_id") String invokeId,
+            @JsonProperty("ussd_ssn") String ussdSsn,
+            @JsonProperty("hlr_ssn") String hlrSsn,
+            @JsonProperty("msc_ssn") String mscSsn,
+            @JsonProperty("parent_id") String parentId,
+            @JsonProperty("events") String events,
+            @JsonProperty("error_code") String errorCode
+
     ) {
         @Override
         public String toString() {
@@ -191,8 +235,13 @@ public class UtilsRecords {
             @JsonProperty(value = "message_id") String messageId,
             @JsonProperty(value = "error") boolean error,
             @JsonProperty(value = "error_code") Integer errorCode,
-            @JsonProperty(value = "error_message") String errorMessage
+            @JsonProperty(value = "error_message") String errorMessage,
+            @JsonProperty(value = "gateway_message_id") String gatewayMessageId
     ) {
+        public HttpProxyResponse(String messageId, boolean error, Integer errorCode, String errorMessage) {
+            this(messageId, error, errorCode, errorMessage, null);
+        }
+
         @Override
         public String toString() {
             return Converter.valueAsString(this);
@@ -204,6 +253,27 @@ public class UtilsRecords {
             @JsonProperty(value = "mcc_mnc") String mccMnc,
             @JsonProperty(value = "smsc") String smsc
     ) {
+        @Override
+        public String toString() {
+            return Converter.valueAsString(this);
+        }
+    }
+
+    public record PlmnPrefix(
+            @JsonProperty(value = "prefix") String prefix,
+            @JsonProperty(value = "mcc") String mcc,
+            @JsonProperty(value = "mnc") String mnc,
+            @JsonProperty(value = "country") String country,
+            @JsonProperty(value = "country_code") String countryCode,
+            @JsonProperty(value = "country_iso") String countryIso,
+            @JsonProperty(value = "sn_range_start") String snRangeStart,
+            @JsonProperty(value = "sn_range_stop") String snRangeStop
+    ) {
+        public PlmnPrefix(String prefix, String mcc, String mnc, String country,
+                          String countryCode, String countryIso) {
+            this(prefix, mcc, mnc, country, countryCode, countryIso, null, null);
+        }
+
         @Override
         public String toString() {
             return Converter.valueAsString(this);
